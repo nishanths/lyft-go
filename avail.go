@@ -49,9 +49,8 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error
 	if err != nil {
 		return nil, err
 	}
-	c.prepareReq(r)
 
-	rsp, err := c.HttpClient.Do(r)
+	rsp, err := c.do(r)
 	if err != nil {
 		return nil, err
 	}
@@ -139,9 +138,8 @@ func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideT
 	if err != nil {
 		return nil, err
 	}
-	c.prepareReq(r)
 
-	rsp, err := c.HttpClient.Do(r)
+	rsp, err := c.do(r)
 	if err != nil {
 		return nil, err
 	}
@@ -208,9 +206,8 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 	if err != nil {
 		return nil, err
 	}
-	c.prepareReq(r)
 
-	rsp, err := c.HttpClient.Do(r)
+	rsp, err := c.do(r)
 	if err != nil {
 		return nil, err
 	}
@@ -235,7 +232,7 @@ type NearbyDriver struct {
 }
 
 type DriverLocation struct {
-	Locations []Location // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
+	Locations []Location `json:"locations"` // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
 }
 
 type Location struct {
@@ -251,9 +248,8 @@ func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
 	if err != nil {
 		return nil, err
 	}
-	c.prepareReq(r)
 
-	rsp, err := c.HttpClient.Do(r)
+	rsp, err := c.do(r)
 	if err != nil {
 		return nil, err
 	}

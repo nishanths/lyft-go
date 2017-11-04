@@ -16,14 +16,20 @@ type Client struct {
 	AccessToken string
 
 	// Optional.
-	HttpClient *http.Client // Uses http.DefaultClient if nil.
+	HTTPClient *http.Client // Uses http.DefaultClient if nil.
 	Header     http.Header  // Extra header to add.
 	BaseURL    string       // The base URL of the API; uses the package-level BaseURL if empty. Useful in testing.
 }
 
-func (c *Client) prepareReq(r *http.Request) {
+func (c *Client) do(r *http.Request) (*http.Response, error) {
 	c.addHeader(r.Header)
 	authorize(r.Header, c.AccessToken)
+
+	client := http.DefaultClient
+	if c.HTTPClient != nil {
+		client = c.HTTPClient
+	}
+	return client.Do(r)
 }
 
 // addHeader adds the key/values in c.Header to h.
