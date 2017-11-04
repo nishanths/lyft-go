@@ -71,20 +71,6 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error
 	return response.RideTypes, nil
 }
 
-// Auxiliary type for unmarshaling.
-// This type corresponds to "cost_estimates" in the Lyft API reference.
-type rideEstimate struct {
-	RideType       string  `json:"ride_type"`
-	DisplayName    string  `json:"display_name"`
-	MaximumCost    int     `json:"estimated_cost_cents_max"`
-	MinimumCost    int     `json:"estimated_cost_cents_min"`
-	Distance       float64 `json:"estimated_distance_miles"`
-	Duration       int64   `json:"estimated_distance_seconds"`
-	PrimetimeToken string  `json:"primetime_confirmation_token"`
-	CostToken      string  `json:"cost_token"`
-	Valid          bool    `json:"is_valid_estimate"`
-}
-
 // RideEstimate is returned by the client's RideEstimates method.
 type RideEstimate struct {
 	RideType       string
@@ -99,6 +85,19 @@ type RideEstimate struct {
 }
 
 func (r *RideEstimate) UnmarshalJSON(p []byte) error {
+	// Auxiliary type for unmarshaling.
+	// This type corresponds to "cost_estimates" in the Lyft API reference.
+	type rideEstimate struct {
+		RideType       string  `json:"ride_type"`
+		DisplayName    string  `json:"display_name"`
+		MaximumCost    int     `json:"estimated_cost_cents_max"`
+		MinimumCost    int     `json:"estimated_cost_cents_min"`
+		Distance       float64 `json:"estimated_distance_miles"`
+		Duration       int64   `json:"estimated_duration_seconds"` // Documented as int in API reference.
+		PrimetimeToken string  `json:"primetime_confirmation_token"`
+		CostToken      string  `json:"cost_token"`
+		Valid          bool    `json:"is_valid_estimate"`
+	}
 	var aux rideEstimate
 	if err := json.Unmarshal(p, &aux); err != nil {
 		return err
@@ -160,14 +159,6 @@ func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideT
 	return response.C, nil
 }
 
-// Auxiliary type for unmarshaling.
-type etaEstimate struct {
-	RideType    string `json:"ride_type"`
-	DisplayName string `json:"display_name"`
-	ETA         int64  `json:"eta_seconds"`
-	Valid       bool   `json:"is_valid_estimate"`
-}
-
 // ETAEstimate is returned by the client's DriverETA method.
 type ETAEstimate struct {
 	RideType    string
@@ -177,6 +168,13 @@ type ETAEstimate struct {
 }
 
 func (e *ETAEstimate) UnmarshalJSON(p []byte) error {
+	// Auxiliary type for unmarshaling.
+	type etaEstimate struct {
+		RideType    string `json:"ride_type"`
+		DisplayName string `json:"display_name"`
+		ETA         int64  `json:"eta_seconds"` // Documented as int
+		Valid       bool   `json:"is_valid_estimate"`
+	}
 	var aux etaEstimate
 	if err := json.Unmarshal(p, &aux); err != nil {
 		return err
@@ -231,15 +229,15 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 
 // NearbyDriver is returned by the client's DriversNearby method.
 type NearbyDriver struct {
-	Drivers  []DriverLocation `json:"drivers"`
-	RideType string           `json:"ride_type"`
+	Drivers  []Driver `json:"drivers"`
+	RideType string   `json:"ride_type"`
+}
+
+type Driver struct {
+	Locations []DriverLocation `json:"locations"` // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
 }
 
 type DriverLocation struct {
-	Locations []Location `json:"locations"` // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
-}
-
-type Location struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
 }
