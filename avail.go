@@ -67,7 +67,7 @@ func (c *Client) RideTypesHeader(lat, lng float64, rideType string) ([]RideType,
 // ride type only. If no ride types are available, the error will
 // be a StatusError.
 func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error) {
-	r, _, err := c.RideHistoryHeader(start, end, limit)
+	r, _, err := c.RideTypesHeader(lat, lng, rideType)
 	return r, err
 }
 
@@ -160,8 +160,8 @@ func (c *Client) CostEstimatesHeader(startLat, startLng, endLat, endLng float64,
 // the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
 // will be returned for the specified type only.
 func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, error) {
-	c, _, err := c.CostEstimates(startLat, startLng, endLat, endLng, rideType)
-	return c, err
+	ce, _, err := c.CostEstimatesHeader(startLat, startLng, endLat, endLng, rideType)
+	return ce, err
 }
 
 // ETAEstimate is returned by the client's DriverETA method.
@@ -232,7 +232,7 @@ func (c *Client) DriverETAHeader(startLat, startLng, endLat, endLng float64, rid
 // The end locations are optional and are ignored if the value equals the
 // package-level const IgnoreArg. The rideType argument is also optional. If set,
 // estimates will be returned for the specified type only.
-func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, http.Header, error) {
+func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, error) {
 	e, _, err := c.DriverETAHeader(startLat, startLng, endLat, endLng, rideType)
 	return e, err
 }
@@ -282,6 +282,6 @@ func (c *Client) DriversNearbyHeader(lat, lng float64) ([]NearbyDriver, http.Hea
 
 // DriversNearby returns the location of drivers near a location.
 func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
-	n, _, err := c.DriverETAHeader(startLat, startLng, endLat, endLng, rideType)
+	n, _, err := c.DriversNearbyHeader(lat, lng)
 	return n, err
 }
