@@ -42,7 +42,7 @@ type rideHistory struct {
 	Vehicle             Vehicle           `json:"vehicle"`
 	PrimetimePercentage string            `json:"primetime_percentage"`
 	Distance            float64           `json:"distance_miles"`
-	Duration            time.Duration     `json:"duration_seconds"` // Documented as float64
+	Duration            float64           `json:"duration_seconds"` // Documented as float64
 	Price               Price             `json:"price"`
 	LineItems           []LineItem        `json:"line_items"`
 	Requested           string            `json:"requested_at"`
