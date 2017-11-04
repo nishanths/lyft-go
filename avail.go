@@ -69,6 +69,20 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error
 	return response.RideTypes, nil
 }
 
+// Auxiliary type for unmarshaling.
+// This type corresponds to "cost_estimates" in the Lyft API reference.
+type rideEstimate struct {
+	RideType       string  `json:"ride_type"`
+	DisplayName    string  `json:"display_name"`
+	MaximumCost    int     `json:"estimated_cost_cents_max"`
+	MinimumCost    int     `json:"estimated_cost_cents_min"`
+	Distance       float64 `json:"estimated_distance_miles"`
+	Duration       int64   `json:"estimated_distance_seconds"`
+	PrimeTimeToken string  `json:"primetime_confirmation_token"`
+	CostToken      string  `json:"cost_token"`
+	Valid          bool    `json:"is_valid_estimate"`
+}
+
 type RideEstimate struct {
 	RideType       string
 	DisplayName    string
@@ -98,29 +112,14 @@ func (r *RideEstimate) UnmarshalJSON(p []byte) error {
 	return nil
 }
 
-// Auxiliary type for unmarshaling.
-// This type corresponds to "cost_estimates" in the Lyft API reference.
-type rideEstimate struct {
-	RideType       string  `json:"ride_type"`
-	DisplayName    string  `json:"display_name"`
-	MaximumCost    int     `json:"estimated_cost_cents_max"`
-	MinimumCost    int     `json:"estimated_cost_cents_min"`
-	Distance       float64 `json:"estimated_distance_miles"`
-	Duration       int     `json:"estimated_distance_seconds"`
-	PrimeTimeToken string  `json:"primetime_confirmation_token"`
-	CostToken      string  `json:"cost_token"`
-	Valid          bool    `json:"is_valid_estimate"`
-}
-
 // IgnoreArg is a sentinel value that can be used when calling a function
 // that has an optional float64 argument.
 const IgnoreArg float64 = -181 // so that valid longitudes aren't ignored.
 
 // RideEstimates returns the estimated cost, distance, and duration of a ride.
-// The end locations are optional and are ignored if they their value equals
+// The end locations are optional and are ignored if the value equals
 // the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
-// will be returned for the specified type only. The possible ride types can
-// typically be obtained from RideType.RideType.
+// will be returned for the specified type only.
 func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]RideEstimate, error) {
 	vals := make(url.Values)
 	vals.Set("start_lat", formatFloat(startLat))
@@ -159,5 +158,73 @@ func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideT
 	return response.C, nil
 }
 
-// func (c *Client) DriverETA()
+// Auxiliary for unmarshaling.
+type etaEstimate struct {
+	RideType    string `json:"ride_type"`
+	DisplayName string `json:"display_name"`
+	ETA         int64  `json:"eta_seconds"`
+	Valid       bool   `json:"is_valid_estimate"`
+}
+
+type ETAEstimate struct {
+	RideType    string
+	DisplayName string
+	ETA         time.Duration
+	Valid       bool // If false, ETA may be invalid.
+}
+
+func (e *ETAEstimate) UnmarshalJSON(p []byte) error {
+	var aux etaEstimate
+	if err := json.Unmarshal(p, &aux); err != nil {
+		return err
+	}
+	e.RideType = aux.RideType
+	e.DisplayName = aux.DisplayName
+	e.ETA = time.Second * time.Duration(aux.ETA)
+	e.Valid = aux.Valid
+	return nil
+}
+
+// DriverETA estimates the time for the nearest driver to reach the specifed location.
+// The end locations are optional and are ignored if the value equals the
+// package-level const IgnoreArg. The rideType argument is also optional. If set,
+// estimates will be returned for the specified type only.
+func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, error) {
+	vals := make(url.Values)
+	vals.Set("lat", formatFloat(startLat))
+	vals.Set("lng", formatFloat(startLng))
+	if endLat != IgnoreArg {
+		vals.Set("destination_lat", formatFloat(endLat))
+	}
+	if endLng != IgnoreArg {
+		vals.Set("destination_lng", formatFloat(endLng))
+	}
+	if rideType != "" {
+		vals.Set("ride_type", formatFloat(endLng))
+	}
+	r, err := http.NewRequest("GET", c.BaseURL+"/v1/eta?"+vals.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.prepareReq(r)
+
+	rsp, err := c.HttpClient.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	if rsp.StatusCode != 200 {
+		return nil, NewStatusError(rsp)
+	}
+
+	var response struct {
+		E []ETAEstimate `json:"eta_estimates"`
+	}
+	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response.E, nil
+}
+
 // func (c *Client) DriversNearby()
