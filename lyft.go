@@ -1,9 +1,8 @@
 package lyft
 
 import (
+	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -23,7 +22,7 @@ type Client struct {
 
 func (c *Client) do(r *http.Request) (*http.Response, error) {
 	c.addHeader(r.Header)
-	authorize(r.Header, c.AccessToken)
+	c.authorize(r.Header)
 
 	client := http.DefaultClient
 	if c.HTTPClient != nil {
@@ -44,26 +43,30 @@ func (c *Client) addHeader(h http.Header) {
 // authorize modifies the header to include the access token
 // in the Authorization field, as expected by the Lyft API. Useful when
 // constructing a request manually.
-func authorize(h http.Header, accessToken string) {
-	h.Add("Authorization", "Bearer "+accessToken)
+func (c *Client) authorize(h http.Header) {
+	h.Add("Authorization", "Bearer "+c.AccessToken)
 }
 
 // StatusError is returned when the HTTP roundtrip succeeded, but there
 // was error was indicated via the HTTP status code.
 type StatusError struct {
-	StatusCode int
-	Reason     string
-	Body       io.ReadCloser
+	StatusCode   int
+	Reason       string
+	ResponseBody bytes.Buffer
 }
 
 // NewStatusError constructs a StatusError from the response. It exists
 // solely so that subpackages (such as package auth) can create a
 // StatusError using the canonical way. Not meant for external use.
+// Does not close rsp.Body.
 func NewStatusError(rsp *http.Response) *StatusError {
+	var buf bytes.Buffer
+	buf.ReadFrom(rsp.Body) // ignore errors
+
 	return &StatusError{
-		StatusCode: rsp.StatusCode,
-		Reason:     rsp.Header.Get("error"),
-		Body:       rsp.Body,
+		StatusCode:   rsp.StatusCode,
+		Reason:       rsp.Header.Get("error"),
+		ResponseBody: buf,
 	}
 }
 
@@ -72,15 +75,6 @@ func (s *StatusError) Error() string {
 		return fmt.Sprintf("%s: status code: %d", s.Reason, s.StatusCode)
 	}
 	return fmt.Sprintf("status code: %d", s.StatusCode)
-}
-
-// Bytes returns the contents of Body. Body is closed automatically
-// after reading. Errors during reading or closing are not reported.
-// This mainly serves as a convenience method.
-func (s *StatusError) Bytes() []byte {
-	defer s.Body.Close()
-	b, _ := ioutil.ReadAll(s.Body)
-	return b
 }
 
 func index(v []string, target string) int {
