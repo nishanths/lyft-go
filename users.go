@@ -29,40 +29,32 @@ const dateTimeLayout = "2006-01-02T15:04:05-07:00" // used in unmarshaling
 
 // Auxiliary type for unmarshaling.
 type rideHistory struct {
-	RideID     string `json:"ride_id"`
-	RideStatus string `json:"status"`
-	RideType   string `json:"ride_type"`
-
-	Origin      rideLocation `json:"origin"`
-	Pickup      rideLocation `json:"pickup"`
-	Destination rideLocation `json:"destination"`
-	Dropoff     rideLocation `json:"dropoff"`
-
-	Location VehicleLocation `json:"location"`
-
-	Passenger Person `json:"passenger"`
-	Driver    Person `json:"driver"`
-
-	Vehicle             Vehicle       `json:"vehicle"`
-	PrimetimePercentage string        `json:"primetime_percentage"`
-	Distance            float64       `json:"distance_miles"`
-	Duration            time.Duration `json:"duration_seconds"` // Documented as float64
-
-	Price     Price      `json:"price"`
-	LineItems []LineItem `json:"line_items"`
-
-	Requested         string `json:"requested_at"`
-	RideProfile       string `json:"ride_profile"`
-	BeaconColor       string `json:"beacon_string"`
-	PricingDetailsURL string `json:"pricing_details_url"`
-	RouteURL          string `json:"route_url"`
-
-	CanCancel         []string          `json:"can_cancel"`
-	CanceledBy        string            `json:"canceled_by"`
-	CancellationPrice cancellationPrice `json:"cancellation_price"`
-
-	Rating   int    `json:"rating"`
-	Feedback string `json:"feedback"`
+	RideID              string            `json:"ride_id"`
+	RideStatus          string            `json:"status"`
+	RideType            string            `json:"ride_type"`
+	Origin              rideLocation      `json:"origin"`
+	Pickup              rideLocation      `json:"pickup"`
+	Destination         rideLocation      `json:"destination"`
+	Dropoff             rideLocation      `json:"dropoff"`
+	Location            VehicleLocation   `json:"location"`
+	Passenger           Person            `json:"passenger"`
+	Driver              Person            `json:"driver"`
+	Vehicle             Vehicle           `json:"vehicle"`
+	PrimetimePercentage string            `json:"primetime_percentage"`
+	Distance            float64           `json:"distance_miles"`
+	Duration            time.Duration     `json:"duration_seconds"` // Documented as float64
+	Price               Price             `json:"price"`
+	LineItems           []LineItem        `json:"line_items"`
+	Requested           string            `json:"requested_at"`
+	RideProfile         string            `json:"ride_profile"`
+	BeaconColor         string            `json:"beacon_string"`
+	PricingDetailsURL   string            `json:"pricing_details_url"`
+	RouteURL            string            `json:"route_url"`
+	CanCancel           []string          `json:"can_cancel"`
+	CanceledBy          string            `json:"canceled_by"`
+	CancellationPrice   cancellationPrice `json:"cancellation_price"`
+	Rating              int               `json:"rating"`
+	Feedback            string            `json:"feedback"`
 }
 
 func (h rideHistory) convert(res *RideHistory) error {
@@ -89,15 +81,12 @@ func (h rideHistory) convert(res *RideHistory) error {
 	}
 
 	res.Location = h.Location
-
 	res.Passenger = h.Passenger
 	res.Driver = h.Driver
-
 	res.Vehicle = h.Vehicle
 	res.PrimetimePercentage = h.PrimetimePercentage
 	res.Distance = h.Distance
 	res.Duration = time.Second * time.Duration(h.Duration)
-
 	res.Price = h.Price
 	res.LineItems = h.LineItems
 
@@ -105,15 +94,14 @@ func (h rideHistory) convert(res *RideHistory) error {
 	if err != nil {
 		return err
 	}
+
 	res.RideProfile = h.RideProfile
 	res.BeaconColor = h.BeaconColor
 	res.PricingDetailsURL = h.PricingDetailsURL
 	res.RouteURL = h.RouteURL
-
 	res.CanCancel = h.CanCancel
 	res.CanceledBy = h.CanceledBy
 	h.CancellationPrice.convert(&res.CancellationPrice)
-
 	res.Rating = h.Rating
 	res.Feedback = h.Feedback
 	return nil
@@ -153,40 +141,32 @@ func (c cancellationPrice) convert(res *CancellationPrice) {
 
 // RideHistory is returned by the client's RideHistory method.
 type RideHistory struct {
-	RideID     string
-	RideStatus string
-	RideType   string
-
-	Origin      RideLocation
-	Pickup      RideLocation
-	Destination RideLocation
-	Dropoff     RideLocation
-
-	Location VehicleLocation
-
-	Passenger Person
-	Driver    Person
-
+	RideID              string
+	RideStatus          string
+	RideType            string
+	Origin              RideLocation
+	Pickup              RideLocation
+	Destination         RideLocation
+	Dropoff             RideLocation
+	Location            VehicleLocation
+	Passenger           Person
+	Driver              Person
 	Vehicle             Vehicle
 	PrimetimePercentage string
 	Distance            float64
 	Duration            time.Duration
-
-	Price     Price
-	LineItems []LineItem
-
-	Requested         time.Time
-	RideProfile       string
-	BeaconColor       string
-	PricingDetailsURL string
-	RouteURL          string
-
-	CanCancel         []string
-	CanceledBy        string
-	CancellationPrice CancellationPrice
-
-	Rating   int
-	Feedback string
+	Price               Price
+	LineItems           []LineItem
+	Requested           time.Time
+	RideProfile         string
+	BeaconColor         string
+	PricingDetailsURL   string
+	RouteURL            string
+	CanCancel           []string
+	CanceledBy          string
+	CancellationPrice   CancellationPrice
+	Rating              int
+	Feedback            string
 }
 
 type RideLocation struct {
