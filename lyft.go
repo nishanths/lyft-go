@@ -19,6 +19,10 @@
 //
 // Errors
 //
+// Formats
+//
+// According to http://petstore.swagger.io/?url=https://api.lyft.com/v1/spec#/,
+// currency strings returned are in ISO 4217.
 //
 // Usage
 //

@@ -69,8 +69,8 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error
 	return response.RideTypes, nil
 }
 
-// RideEstimate is returned by the client's RideEstimates method.
-type RideEstimate struct {
+// CostEstimate is returned by the client's CostEstimates method.
+type CostEstimate struct {
 	RideType       string
 	DisplayName    string
 	MaximumCost    int           // Estimated maximum cost of the ride.
@@ -82,10 +82,10 @@ type RideEstimate struct {
 	Valid          bool // If false, MaximumCost and MinimumCost may be invalid.
 }
 
-func (r *RideEstimate) UnmarshalJSON(p []byte) error {
+func (r *CostEstimate) UnmarshalJSON(p []byte) error {
 	// Auxiliary type for unmarshaling.
 	// This type corresponds to "cost_estimates" in the Lyft API reference.
-	type rideEstimate struct {
+	type costEstimate struct {
 		RideType       string  `json:"ride_type"`
 		DisplayName    string  `json:"display_name"`
 		MaximumCost    int     `json:"estimated_cost_cents_max"`
@@ -96,7 +96,7 @@ func (r *RideEstimate) UnmarshalJSON(p []byte) error {
 		CostToken      string  `json:"cost_token"`
 		Valid          bool    `json:"is_valid_estimate"`
 	}
-	var aux rideEstimate
+	var aux costEstimate
 	if err := json.Unmarshal(p, &aux); err != nil {
 		return err
 	}
@@ -116,11 +116,11 @@ func (r *RideEstimate) UnmarshalJSON(p []byte) error {
 // that has an optional float64 argument.
 const IgnoreArg float64 = -181 // so that valid longitudes aren't ignored.
 
-// RideEstimates returns the estimated cost, distance, and duration of a ride.
+// CostEstimates returns the estimated cost, distance, and duration of a ride.
 // The end locations are optional and are ignored if the value equals
 // the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
 // will be returned for the specified type only.
-func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]RideEstimate, error) {
+func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, error) {
 	vals := make(url.Values)
 	vals.Set("start_lat", formatFloat(startLat))
 	vals.Set("start_lng", formatFloat(startLng))
@@ -149,7 +149,7 @@ func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideT
 	}
 
 	var response struct {
-		C []RideEstimate `json:"cost_estimates"`
+		C []CostEstimate `json:"cost_estimates"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
 		return nil, err
