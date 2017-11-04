@@ -129,7 +129,7 @@ type cancellationPrice struct {
 	Amount        int    `json:"amonut"`
 	Currency      string `json:"currency"`
 	Token         string `json:"token"`
-	TokenDuration int64  `json:"token_duration"` // seconds
+	TokenDuration int64  `json:"token_duration"` // seconds; documented as int
 }
 
 func (c cancellationPrice) convert(res *CancellationPrice) {
