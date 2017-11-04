@@ -168,6 +168,7 @@ func (s *StatusError) Error() string {
 	return fmt.Sprintf("status code: %d", s.StatusCode)
 }
 
+// RequestID returns the value for the Request-ID key in the header.
 func RequestID(h http.Header) string {
 	return h.Get("Request-ID")
 }
