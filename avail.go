@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+// TODO: Richer StatusError for all methods.
+
 type RideType struct {
 	DisplayName string  `json:"display_name"`
 	RideType    string  `json:"ride_type"`
@@ -227,4 +229,45 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 	return response.E, nil
 }
 
-// func (c *Client) DriversNearby()
+type NearbyDriver struct {
+	Drivers  []DriverLocation `json:"drivers"`
+	RideType string           `json:"ride_type"`
+}
+
+type DriverLocation struct {
+	Locations []Location // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
+}
+
+type Location struct {
+	Latitude  float64 `json:"lat"`
+	Longitude float64 `json:"lng"`
+}
+
+func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
+	vals := make(url.Values)
+	vals.Set("lat", formatFloat(lat))
+	vals.Set("lng", formatFloat(lng))
+	r, err := http.NewRequest("GET", c.BaseURL+"/v1/drivers?"+vals.Encode(), nil)
+	if err != nil {
+		return nil, err
+	}
+	c.prepareReq(r)
+
+	rsp, err := c.HttpClient.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	if rsp.StatusCode != 200 {
+		return nil, NewStatusError(rsp)
+	}
+
+	var response struct {
+		N []NearbyDriver `json:"nearby_drivers"`
+	}
+	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+		return nil, err
+	}
+	return response.N, nil
+}
