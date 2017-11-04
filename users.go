@@ -25,7 +25,7 @@ const (
 	ProfilePersonal = "personal"
 )
 
-const dateTimeLayout = "2006-01-02T15:04:05-07:00" // used in unmarshaling
+const datetimeLayout = "2006-01-02T15:04:05-07:00" // used in unmarshaling; seems to be ISO 8601
 
 // Auxiliary type for unmarshaling.
 type rideHistory struct {
@@ -62,7 +62,6 @@ func (h rideHistory) convert(res *RideHistory) error {
 	res.RideID = h.RideID
 	res.RideStatus = h.RideStatus
 	res.RideType = h.RideType
-
 	err = h.Origin.convert(&res.Origin)
 	if err != nil {
 		return err
@@ -79,7 +78,6 @@ func (h rideHistory) convert(res *RideHistory) error {
 	if err != nil {
 		return err
 	}
-
 	res.Location = h.Location
 	res.Passenger = h.Passenger
 	res.Driver = h.Driver
@@ -89,19 +87,20 @@ func (h rideHistory) convert(res *RideHistory) error {
 	res.Duration = time.Second * time.Duration(h.Duration)
 	res.Price = h.Price
 	res.LineItems = h.LineItems
-
-	res.Requested, err = time.Parse(dateTimeLayout, h.Requested)
+	res.Requested, err = time.Parse(datetimeLayout, h.Requested)
 	if err != nil {
 		return err
 	}
-
 	res.RideProfile = h.RideProfile
 	res.BeaconColor = h.BeaconColor
 	res.PricingDetailsURL = h.PricingDetailsURL
 	res.RouteURL = h.RouteURL
 	res.CanCancel = h.CanCancel
 	res.CanceledBy = h.CanceledBy
-	h.CancellationPrice.convert(&res.CancellationPrice)
+	err = h.CancellationPrice.convert(&res.CancellationPrice)
+	if err != nil {
+		return err
+	}
 	res.Rating = h.Rating
 	res.Feedback = h.Feedback
 	return nil
@@ -121,7 +120,7 @@ func (l rideLocation) convert(res *RideLocation) error {
 	res.Longitude = l.Longitude
 	res.Address = l.Address
 	res.ETA = time.Second * time.Duration(l.ETA) // TODO: consider not truncating
-	res.Time, err = time.Parse(dateTimeLayout, l.Time)
+	res.Time, err = time.Parse(datetimeLayout, l.Time)
 	return err
 }
 
@@ -132,11 +131,12 @@ type cancellationPrice struct {
 	TokenDuration int64  `json:"token_duration"` // seconds; documented as int
 }
 
-func (c cancellationPrice) convert(res *CancellationPrice) {
+func (c cancellationPrice) convert(res *CancellationPrice) error {
 	res.Amount = c.Amount
 	res.Currency = c.Currency
 	res.Token = c.Token
 	res.TokenDuration = time.Second * time.Duration(c.TokenDuration) // TODO: consider not truncating
+	return nil
 }
 
 // RideHistory is returned by the client's RideHistory method.

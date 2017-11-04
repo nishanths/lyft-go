@@ -1,6 +1,25 @@
 // Package lyft provides a client for Lyft's v1 HTTP API.
 // Lyft's API reference is available at https://developer.lyft.com/v1/docs/overview.
 //
+// Response header and Request-ID
+//
+// Methods in this package that make requests to the Lyft API come in two variants.
+//
+//  func (c *Client) FooHeader (T, http.Header, error)
+//  func (c *Client) Foo (T, error)
+//
+// They are equivalent, except that the first form includes the HTTP response
+// header in its return type. The returned header is safe to access
+// when the error is nil or the error is of type *StatusError.
+//
+// In most scenarios, consumers of the package will typically use the Foo variant.
+// The returned header is useful for obtaining the unique Request-ID header
+// that Lyft sets in each response for debugging. For details see
+// https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes.
+//
+// Errors
+//
+//
 // Usage
 //
 // This example shows how to obtain an access token and use it find the
@@ -9,32 +28,18 @@
 //   // Obtain an access token using the two-legged or three-legged flows.
 //   t, err := twoleg.GenerateToken(http.DefaultClient, lyft.BaseURL, os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
 //   if err != nil {
-//      log.Fatalf("generate token: %s", err)
+//      log.Fatalf("error generating token: %s", err)
 //   }
 //
 //   // Create a client.
 //   c := &lyft.Client{AccessToken: t.AccessToken}
 //
 //   // Make requests.
-//   v, err := c.RideTypes(37.7, -122.2)
+//   r, err := c.RideTypes(37.7, -122.2)
 //   if err != nil {
-//       log.Fatalf("get ride types: %s", err)
+//       log.Fatalf("error getting ride types: %s", err)
 //   }
-//   log.Println(v)
-//
-// Response header and Request-ID
-//
-// Methods in this package that make requests to the Lyft API come in two forms.
-//
-//  func (c *Client) FooHeader (T, http.Header, error)
-//  func (c *Client) Foo (T, error)
-//
-// They are equivalent, except that the first form includes the HTTP response
-// header in its return type. The returned header is safe to access
-// when the error is nil or the error is of type StatusError.
-// The returned header is useful for obtaining the Request-ID header
-// that is set in each response for troubleshooting. For details see
-// https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes
+//   log.Printf("%+v", r)
 //
 // Unsupported features
 //
@@ -59,13 +64,11 @@ const BaseURL = "https://api.lyft.com/v1"
 // client's fields are being modified at the same time.
 type Client struct {
 	AccessToken string
-
 	// Optional.
 	HTTPClient *http.Client // Uses http.DefaultClient if nil.
 	Header     http.Header  // Extra header to add.
 	BaseURL    string       // The base URL of the API; uses the package-level BaseURL if empty. Useful in testing.
-
-	debug bool // Dump requests/responses using package log's default logger.
+	debug      bool         // Dump requests/responses using package log's default logger.
 }
 
 func (c *Client) base() string {
@@ -89,7 +92,7 @@ func (c *Client) do(r *http.Request) (*http.Response, error) {
 	if c.debug {
 		dump, err := httputil.DumpRequestOut(r, true)
 		if err != nil {
-			log.Printf("dumping request: %s", err)
+			log.Printf("error dumping request: %s", err)
 		} else {
 			log.Printf("%s", dump)
 		}
@@ -101,7 +104,7 @@ func (c *Client) do(r *http.Request) (*http.Response, error) {
 	if c.debug {
 		dump, err := httputil.DumpResponse(rsp, true)
 		if err != nil {
-			log.Printf("dumping response: %s", err)
+			log.Printf("error dumping response: %s", err)
 		} else {
 			log.Printf("%s", dump)
 		}
