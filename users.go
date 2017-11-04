@@ -65,28 +65,27 @@ type rideHistory struct {
 	Feedback string `json:"feedback"`
 }
 
-func (h rideHistory) convert() (RideHistory, error) {
-	var res RideHistory
+func (h rideHistory) convert(res *RideHistory) error {
 	var err error
 	res.RideID = h.RideID
 	res.RideStatus = h.RideStatus
 	res.RideType = h.RideType
 
-	res.Origin, err = h.Origin.convert()
+	err = h.Origin.convert(&res.Origin)
 	if err != nil {
-		return res, err
+		return err
 	}
-	res.Pickup, err = h.Pickup.convert()
+	err = h.Pickup.convert(&res.Pickup)
 	if err != nil {
-		return res, err
+		return err
 	}
-	res.Destination, err = h.Destination.convert()
+	err = h.Destination.convert(&res.Destination)
 	if err != nil {
-		return res, err
+		return err
 	}
-	res.Dropoff, err = h.Dropoff.convert()
+	err = h.Dropoff.convert(&res.Dropoff)
 	if err != nil {
-		return res, err
+		return err
 	}
 
 	res.Location = h.Location
@@ -104,7 +103,7 @@ func (h rideHistory) convert() (RideHistory, error) {
 
 	res.Requested, err = time.Parse(dateTimeLayout, h.Requested)
 	if err != nil {
-		return res, err
+		return err
 	}
 	res.RideProfile = h.RideProfile
 	res.BeaconColor = h.BeaconColor
@@ -113,11 +112,11 @@ func (h rideHistory) convert() (RideHistory, error) {
 
 	res.CanCancel = h.CanCancel
 	res.CanceledBy = h.CanceledBy
-	res.CancellationPrice = h.CancellationPrice.convert()
+	h.CancellationPrice.convert(&res.CancellationPrice)
 
 	res.Rating = h.Rating
 	res.Feedback = h.Feedback
-	return res, nil
+	return nil
 }
 
 type rideLocation struct {
@@ -128,15 +127,14 @@ type rideLocation struct {
 	Time      string  `json:"time"`
 }
 
-func (l rideLocation) convert() (RideLocation, error) {
-	var res RideLocation
+func (l rideLocation) convert(res *RideLocation) error {
 	var err error
 	res.Latitude = l.Latitude
 	res.Longitude = l.Longitude
 	res.Address = l.Address
 	res.ETA = time.Second * time.Duration(l.ETA) // TODO: consider not truncating
 	res.Time, err = time.Parse(dateTimeLayout, l.Time)
-	return res, err
+	return err
 }
 
 type cancellationPrice struct {
@@ -146,13 +144,11 @@ type cancellationPrice struct {
 	TokenDuration int64  `json:"token_duration"` // seconds
 }
 
-func (c cancellationPrice) convert() CancellationPrice {
-	return CancellationPrice{
-		Amount:        c.Amount,
-		Currency:      c.Currency,
-		Token:         c.Token,
-		TokenDuration: time.Second * time.Duration(c.TokenDuration), // TODO: consider not truncating
-	}
+func (c cancellationPrice) convert(res *CancellationPrice) {
+	res.Amount = c.Amount
+	res.Currency = c.Currency
+	res.Token = c.Token
+	res.TokenDuration = time.Second * time.Duration(c.TokenDuration) // TODO: consider not truncating
 }
 
 // RideHistory is returned by the client's RideHistory method.
@@ -246,19 +242,11 @@ type CancellationPrice struct {
 }
 
 func (h *RideHistory) UnmarshalJSON(p []byte) error {
-
 	var aux rideHistory
 	if err := json.Unmarshal(p, &aux); err != nil {
 		return err
 	}
-
-	h.RideID = aux.RideID
-	h.RideStatus = aux.RideStatus
-	h.RideType = aux.RideType
-
-	// r.Time
-	// TODO 2015-09-24T23:27:25+00:00
-	return nil
+	return aux.convert(h)
 }
 
 // RideHistory returns the authenticated user's current and past rides.
