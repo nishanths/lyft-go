@@ -8,8 +8,6 @@ import (
 	"time"
 )
 
-// TODO: Richer StatusError for all methods.
-
 // RideType is returned by the client's RideTypes method.
 type RideType struct {
 	DisplayName string  `json:"display_name"`

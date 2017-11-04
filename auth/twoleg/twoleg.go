@@ -11,51 +11,56 @@ import (
 	"github.com/nishanths/lyft"
 )
 
-// GenerateTokenResponse is returned by GenerateToken.
-type GenerateTokenResponse struct {
+// Token is returned by GenerateToken.
+type Token struct {
 	AccessToken string
 	TokenType   string
 	Expires     time.Duration
 	Scopes      []string
 }
 
-type generateTokenResponse struct {
+type token struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
 	Expires     int64  `json:"expires_in"` // seconds
 	Scopes      string `json:"scope"`      // space delimited
 }
 
-// GenerateToken creates a new access token.
-// The access token returned can be used in lyft.Client.
-// baseURL is typically lyft.BaseURL.
-func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (GenerateTokenResponse, error) {
+func GenerateTokenHeader(c *http.Client, baseURL, clientID, clientSecret string) (Token, http.Header, error) {
 	body := `{"grant_type": "client_credentials", "scope": "public"}`
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
-		return GenerateTokenResponse{}, err
+		return Token{}, nil, err
 	}
 	r.Header.Set("Content-Type", "application/json")
 	r.SetBasicAuth(clientID, clientSecret)
 
 	rsp, err := c.Do(r)
 	if err != nil {
-		return GenerateTokenResponse{}, err
+		return Token{}, nil, err
 	}
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return GenerateTokenResponse{}, lyft.NewStatusError(rsp)
+		return Token{}, rsp.Header, lyft.NewStatusError(rsp)
 	}
 
-	var g generateTokenResponse
+	var g token
 	if err := json.NewDecoder(rsp.Body).Decode(&g); err != nil {
-		return GenerateTokenResponse{}, err
+		return Token{}, rsp.Header, err
 	}
-	return GenerateTokenResponse{
+	return Token{
 		AccessToken: g.AccessToken,
 		TokenType:   g.TokenType,
 		Expires:     time.Second * time.Duration(g.Expires),
 		Scopes:      strings.Fields(g.Scopes),
-	}, nil
+	}, rsp.Header, nil
+}
+
+// GenerateToken creates a new access token.
+// The access token returned can be used in lyft.Client.
+// baseURL is typically lyft.BaseURL.
+func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Token, error) {
+	g, _, err := GenerateTokenHeader(c, baseURL, clientID, clientSecret)
+	return g, err
 }

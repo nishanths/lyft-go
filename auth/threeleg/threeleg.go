@@ -13,8 +13,6 @@ import (
 	"github.com/nishanths/lyft"
 )
 
-// TODO: better returned error types.
-
 // AuthorizationURL is the URL that a user should be directed to, in order for the user
 // to grant the list of permissions your application is requesting.
 func AuthorizationURL(clientID string, scopes []string, state string) string {
@@ -34,8 +32,8 @@ func AuthorizationCode(r *http.Request) string {
 	return r.FormValue("code")
 }
 
-// GenerateTokenResponse is returned by GenerateToken.
-type GenerateTokenResponse struct {
+// Token is returned by GenerateToken.
+type Token struct {
 	AccessToken  string
 	RefreshToken string
 	TokenType    string
@@ -43,7 +41,7 @@ type GenerateTokenResponse struct {
 	Scopes       []string
 }
 
-type generateTokenResponse struct {
+type token struct {
 	AccessToken  string
 	RefreshToken string
 	TokenType    string
@@ -51,109 +49,124 @@ type generateTokenResponse struct {
 	Scopes       string // space delimited
 }
 
-// RefreshTokenResponse is returned by RefreshToken.
-type RefreshTokenResponse struct {
+// RefToken is returned by RefreshToken.
+type RefToken struct {
 	AccessToken string
 	TokenType   string
 	Expires     time.Duration
 	Scopes      []string
 }
 
-type refreshTokenResponse struct {
+type refToken struct {
 	AccessToken string
 	TokenType   string
 	Expires     int64  // seconds
 	Scopes      string // space delimited
 }
 
-// GenerateToken creates a new access token using the authorization code
-// obtained from Lyft's authorization redirect. The access token
-// returned can be used in lyft.Client. baseURL is typically lyft.BaseURL.
-func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (GenerateTokenResponse, error) {
+func GenerateTokenHeader(c *http.Client, baseURL, clientID, clientSecret, code string) (Token, http.Header, error) {
 	body := fmt.Sprintf(`{"grant_type": "authorization_code", "code": "%s"}`, code)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
-		return GenerateTokenResponse{}, err
+		return Token{}, nil, err
 	}
 	r.Header.Set("Content-Type", "application/json")
 	r.SetBasicAuth(clientID, clientSecret)
 
 	rsp, err := c.Do(r)
 	if err != nil {
-		return GenerateTokenResponse{}, err
+		return Token{}, nil, err
 	}
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return GenerateTokenResponse{}, lyft.NewStatusError(rsp)
+		return Token{}, rsp.Header, lyft.NewStatusError(rsp)
 	}
 
-	var g generateTokenResponse
+	var g token
 	if err := json.NewDecoder(rsp.Body).Decode(&g); err != nil {
-		return GenerateTokenResponse{}, err
+		return Token{}, rsp.Header, err
 	}
-	return GenerateTokenResponse{
+	return Token{
 		AccessToken:  g.AccessToken,
 		RefreshToken: g.RefreshToken,
 		TokenType:    g.TokenType,
 		Expires:      time.Second * time.Duration(g.Expires),
 		Scopes:       strings.Fields(g.Scopes),
-	}, nil
+	}, rsp.Header, nil
 }
 
-// RefreshToken refreshes the access token associated with refreshToken.
-// See GenerateTokenResponse for obtaining access/refresh token pairs.
-// baseURL is typically lyft.BaseURL.
-func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefreshTokenResponse, error) {
+// GenerateToken creates a new access token using the authorization code
+// obtained from Lyft's authorization redirect. The access token
+// returned can be used in lyft.Client. baseURL is typically lyft.BaseURL.
+func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (Token, error) {
+	g, _, err := GenerateTokenHeader(c, baseURL, clientID, clientSecret, code)
+	return g, err
+}
+
+func RefreshTokenHeader(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefToken, http.Header, error) {
 	body := fmt.Sprintf(`{"grant_type": "refresh_token", "refresh_token": "%s"}`, refreshToken)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
-		return RefreshTokenResponse{}, err
+		return RefToken{}, nil, err
 	}
 	r.Header.Set("Content-Type", "application/json")
 	r.SetBasicAuth(clientID, clientSecret)
 
 	rsp, err := c.Do(r)
 	if err != nil {
-		return RefreshTokenResponse{}, err
+		return RefToken{}, nil, err
 	}
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return RefreshTokenResponse{}, lyft.NewStatusError(rsp)
+		return RefToken{}, rsp.Header, lyft.NewStatusError(rsp)
 	}
 
-	var ref refreshTokenResponse
+	var ref refToken
 	if err := json.NewDecoder(rsp.Body).Decode(&ref); err != nil {
-		return RefreshTokenResponse{}, err
+		return RefToken{}, rsp.Header, err
 	}
-	return RefreshTokenResponse{
+	return RefToken{
 		AccessToken: ref.AccessToken,
 		TokenType:   ref.TokenType,
 		Expires:     time.Second * time.Duration(ref.Expires),
 		Scopes:      strings.Fields(ref.Scopes),
-	}, nil
+	}, rsp.Header, nil
+}
+
+// RefreshToken refreshes the access token associated with refreshToken.
+// See Token for obtaining access/refresh token pairs.
+// baseURL is typically lyft.BaseURL.
+func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefToken, error) {
+	r, _, err := RefreshTokenHeader(c, baseURL, clientID, clientSecret, refreshToken)
+	return r, err
+}
+
+func RevokeTokenHeader(c *http.Client, baseURL, clientID, clientSecret, accessToken string) (http.Header, error) {
+	body := fmt.Sprintf(`{"token": "%s"}`, accessToken)
+	r, err := http.NewRequest("POST", baseURL+"/oauth/revoke_refresh_token", strings.NewReader(body))
+	if err != nil {
+		return nil, err
+	}
+	r.Header.Set("Content-Type", "application/json")
+	r.SetBasicAuth(clientID, clientSecret)
+
+	rsp, err := c.Do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	if rsp.StatusCode != 200 {
+		return rsp.Header, lyft.NewStatusError(rsp)
+	}
+	return rsp.Header, nil
 }
 
 // RevokeToken revokes the supplied access token.
 // baseURL is typically lyft.BaseURL.
 func RevokeToken(c *http.Client, baseURL, clientID, clientSecret, accessToken string) error {
-	body := fmt.Sprintf(`{"token": "%s"}`, accessToken)
-	r, err := http.NewRequest("POST", baseURL+"/oauth/revoke_refresh_token", strings.NewReader(body))
-	if err != nil {
-		return err
-	}
-	r.Header.Set("Content-Type", "application/json")
-	r.SetBasicAuth(clientID, clientSecret)
-
-	rsp, err := c.Do(r)
-	if err != nil {
-		return err
-	}
-	defer rsp.Body.Close()
-
-	if rsp.StatusCode != 200 {
-		return lyft.NewStatusError(rsp)
-	}
-	return nil
+	_, err := RevokeTokenHeader(c, baseURL, clientID, clientSecret, accessToken)
+	return err
 }
