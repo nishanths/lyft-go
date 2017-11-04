@@ -25,9 +25,9 @@ type generateTokenResponse struct {
 	Scopes      string `json:"scope"`      // space delimited
 }
 
-func GenerateToken(c *http.Client, clientID, clientSecret, code string) (GenerateTokenResponse, error) {
+func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (GenerateTokenResponse, error) {
 	body := strings.NewReader(`{"grant_type": "client_credentials", "scope": "public"}`)
-	r, err := http.NewRequest("POST", lyft.BaseURL+"/oauth/token", body)
+	r, err := http.NewRequest("POST", baseURL+"/oauth/token", body)
 	if err != nil {
 		return GenerateTokenResponse{}, err
 	}
