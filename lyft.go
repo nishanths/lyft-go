@@ -42,11 +42,12 @@
 //   c := &lyft.Client{AccessToken: t.AccessToken}
 //
 //   // Make requests.
-//   r, err := c.RideTypes(37.7, -122.2)
+//   r, header, err := c.RideTypes(37.7, -122.2)
 //   if err != nil {
 //       log.Fatalf("error getting ride types: %s", err)
 //   }
-//   log.Printf("%+v", r)
+//   log.Printf("ride types: %+v", r)
+//   log.Printf("Request-ID: %s", lyft.RequestID(header))
 //
 // Missing Features
 //
