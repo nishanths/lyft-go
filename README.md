@@ -4,6 +4,8 @@ Go client for v1 of lyft.com's HTTP API.
 
 `go get github.com/nishanths/lyft/...`
 
+No API guarantees yet. Please vendor.
+
 ### Docs
 
 godoc: https://godoc.org/github.com/nishanths/lyft
