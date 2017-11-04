@@ -79,7 +79,7 @@ type rideEstimate struct {
 	MinimumCost    int     `json:"estimated_cost_cents_min"`
 	Distance       float64 `json:"estimated_distance_miles"`
 	Duration       int64   `json:"estimated_distance_seconds"`
-	PrimeTimeToken string  `json:"primetime_confirmation_token"`
+	PrimetimeToken string  `json:"primetime_confirmation_token"`
 	CostToken      string  `json:"cost_token"`
 	Valid          bool    `json:"is_valid_estimate"`
 }
@@ -91,7 +91,7 @@ type RideEstimate struct {
 	MinimumCost    int           // Estimated minimum cost of the ride.
 	Distance       float64       // Estimated distance of the ride; in miles.
 	Duration       time.Duration // Estimated duration of the ride.
-	PrimeTimeToken string        // DEPRECATED; see CostToken and https://developer.lyft.com/reference#availability-ride-estimates.
+	PrimetimeToken string        // DEPRECATED; see CostToken and https://developer.lyft.com/reference#availability-ride-estimates.
 	CostToken      string
 	Valid          bool // If false, MaximumCost and MinimumCost may be invalid.
 }
@@ -107,7 +107,7 @@ func (r *RideEstimate) UnmarshalJSON(p []byte) error {
 	r.MinimumCost = aux.MinimumCost
 	r.Distance = aux.Distance
 	r.Duration = time.Second * time.Duration(aux.Duration)
-	r.PrimeTimeToken = aux.PrimeTimeToken
+	r.PrimetimeToken = aux.PrimetimeToken
 	r.CostToken = aux.CostToken
 	r.Valid = aux.Valid
 	return nil
