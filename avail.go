@@ -31,13 +31,7 @@ func formatFloat(n float64) string {
 	return strconv.FormatFloat(n, 'f', -1, 64)
 }
 
-// RideTypes returns the ride types available at the location.
-// The rideType is optional. If set, details will be returned for the specified
-// ride type only. If no ride types are available, the error will
-// be a StatusError.
-//
-// TODO: what does the error look like when no rides are available?
-func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error) {
+func (c *Client) RideTypesHeader(lat, lng float64, rideType string) ([]RideType, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(lat))
 	vals.Set("lng", formatFloat(lng))
@@ -46,27 +40,35 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error
 	}
 	r, err := http.NewRequest("GET", c.base()+"/v1/ridetypes?"+vals.Encode(), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rsp.Body.Close()
 
-	// TODO: this has more details in the error response.
 	if rsp.StatusCode != 200 {
-		return nil, NewStatusError(rsp)
+		return nil, rsp.Header, NewStatusError(rsp)
 	}
 
 	var response struct {
 		RideTypes []RideType `json:"ride_types"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
-		return nil, err
+		return nil, rsp.Header, err
 	}
-	return response.RideTypes, nil
+	return response.RideTypes, rsp.Header, nil
+}
+
+// RideTypes returns the ride types available at the location.
+// The rideType is optional. If set, details will be returned for the specified
+// ride type only. If no ride types are available, the error will
+// be a StatusError.
+func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error) {
+	r, _, err := c.RideHistoryHeader(start, end, limit)
+	return r, err
 }
 
 // CostEstimate is returned by the client's CostEstimates method.
@@ -116,11 +118,7 @@ func (r *CostEstimate) UnmarshalJSON(p []byte) error {
 // that has an optional float64 argument.
 const IgnoreArg float64 = -181 // so that valid longitudes aren't ignored.
 
-// CostEstimates returns the estimated cost, distance, and duration of a ride.
-// The end locations are optional and are ignored if the value equals
-// the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
-// will be returned for the specified type only.
-func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, error) {
+func (c *Client) CostEstimatesHeader(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("start_lat", formatFloat(startLat))
 	vals.Set("start_lng", formatFloat(startLng))
@@ -135,26 +133,35 @@ func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideT
 	}
 	r, err := http.NewRequest("GET", c.base()+"/v1/cost?"+vals.Encode(), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return nil, NewStatusError(rsp)
+		return nil, rsp.Header, NewStatusError(rsp)
 	}
 
 	var response struct {
 		C []CostEstimate `json:"cost_estimates"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
-		return nil, err
+		return nil, rsp.Header, err
 	}
-	return response.C, nil
+	return response.C, rsp.Header, nil
+}
+
+// CostEstimates returns the estimated cost, distance, and duration of a ride.
+// The end locations are optional and are ignored if the value equals
+// the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
+// will be returned for the specified type only.
+func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, error) {
+	c, _, err := c.CostEstimates(startLat, startLng, endLat, endLng, rideType)
+	return c, err
 }
 
 // ETAEstimate is returned by the client's DriverETA method.
@@ -184,11 +191,7 @@ func (e *ETAEstimate) UnmarshalJSON(p []byte) error {
 	return nil
 }
 
-// DriverETA estimates the time for the nearest driver to reach the specifed location.
-// The end locations are optional and are ignored if the value equals the
-// package-level const IgnoreArg. The rideType argument is also optional. If set,
-// estimates will be returned for the specified type only.
-func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, error) {
+func (c *Client) DriverETAHeader(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(startLat))
 	vals.Set("lng", formatFloat(startLng))
@@ -203,26 +206,35 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 	}
 	r, err := http.NewRequest("GET", c.base()+"/v1/eta?"+vals.Encode(), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return nil, NewStatusError(rsp)
+		return nil, rsp.Header, NewStatusError(rsp)
 	}
 
 	var response struct {
 		E []ETAEstimate `json:"eta_estimates"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
-		return nil, err
+		return nil, rsp.Header, err
 	}
-	return response.E, nil
+	return response.E, rsp.Header, nil
+}
+
+// DriverETA estimates the time for the nearest driver to reach the specifed location.
+// The end locations are optional and are ignored if the value equals the
+// package-level const IgnoreArg. The rideType argument is also optional. If set,
+// estimates will be returned for the specified type only.
+func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, http.Header, error) {
+	e, _, err := c.DriverETAHeader(startLat, startLng, endLat, endLng, rideType)
+	return e, err
 }
 
 // NearbyDriver is returned by the client's DriversNearby method.
@@ -240,31 +252,36 @@ type DriverLocation struct {
 	Longitude float64 `json:"lng"`
 }
 
-// DriversNearby returns the location of drivers near a location.
-func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
+func (c *Client) DriversNearbyHeader(lat, lng float64) ([]NearbyDriver, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(lat))
 	vals.Set("lng", formatFloat(lng))
 	r, err := http.NewRequest("GET", c.base()+"/v1/drivers?"+vals.Encode(), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rsp.Body.Close()
 
 	if rsp.StatusCode != 200 {
-		return nil, NewStatusError(rsp)
+		return nil, rsp.Header, NewStatusError(rsp)
 	}
 
 	var response struct {
 		N []NearbyDriver `json:"nearby_drivers"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
-		return nil, err
+		return nil, rsp.Header, err
 	}
-	return response.N, nil
+	return response.N, rsp.Header, nil
+}
+
+// DriversNearby returns the location of drivers near a location.
+func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
+	n, _, err := c.DriverETAHeader(startLat, startLng, endLat, endLng, rideType)
+	return n, err
 }

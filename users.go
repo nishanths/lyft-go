@@ -231,15 +231,7 @@ func (h *RideHistory) UnmarshalJSON(p []byte) error {
 	return aux.convert(h)
 }
 
-// RideHistory returns the authenticated user's current and past rides.
-// See the Lyft API reference for details on how far back the
-// start and end times can go. If end is the zero time it is ignored.
-// Limit specifies the maximum number of rides to return. If limit is -1,
-// RideHistory requests the maximum limit documented in the API reference (50).
-//
-// Implementation detail: The times, in UTC, are formatted using "2006-01-02T15:04:05Z".
-// For example: start.UTC().Format("2006-01-02T15:04:05Z").
-func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, error) {
+func (c *Client) RideHistoryHeader(start, end time.Time, limit int32) ([]RideHistory, http.Header, error) {
 	const layout = "2006-01-02T15:04:05Z"
 
 	vals := make(url.Values)
@@ -253,27 +245,40 @@ func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, 
 	vals.Set("limit", strconv.FormatInt(int64(limit), 10))
 	r, err := http.NewRequest("GET", c.base()+"/v1/rides?"+vals.Encode(), nil)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	defer rsp.Body.Close()
 
 	// TODO: this has more details in the error response.
 	if rsp.StatusCode != 200 {
-		return nil, NewStatusError(rsp)
+		return nil, rsp.Header, NewStatusError(rsp)
 	}
 
 	var response struct {
 		R []RideHistory `json:"ride_history"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
-		return nil, err
+		return nil, rsp.Header, err
 	}
-	return response.R, nil
+	return response.R, rsp.Header, nil
+}
+
+// RideHistory returns the authenticated user's current and past rides.
+// See the Lyft API reference for details on how far back the
+// start and end times can go. If end is the zero time it is ignored.
+// Limit specifies the maximum number of rides to return. If limit is -1,
+// RideHistory requests the maximum limit documented in the API reference (50).
+//
+// Implementation detail: The times, in UTC, are formatted using "2006-01-02T15:04:05Z".
+// For example: start.UTC().Format("2006-01-02T15:04:05Z").
+func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, error) {
+	r, _, err := c.RideHistoryHeader(start, end, limit)
+	return r, err
 }
 
 // UserProfile is returned by the client's UserProfile method.
@@ -284,27 +289,32 @@ type UserProfile struct {
 	Ridden    bool   `json:"has_taken_a_ride"` // Whether the user has taken at least one ride.
 }
 
-// UserProfile returns the authenticated user's profile info.
-func (c *Client) UserProfile(id string) (UserProfile, error) {
+func (c *Client) UserProfileHeader(id string) (UserProfile, http.Header, error) {
 	r, err := http.NewRequest("GET", c.base()+"/v1/profile", nil)
 	if err != nil {
-		return UserProfile{}, err
+		return UserProfile{}, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return UserProfile{}, err
+		return UserProfile{}, nil, err
 	}
 	defer rsp.Body.Close()
 
 	// TODO: this has more details in the error response.
 	if rsp.StatusCode != 200 {
-		return UserProfile{}, NewStatusError(rsp)
+		return UserProfile{}, rsp.Header, NewStatusError(rsp)
 	}
 
 	var p UserProfile
 	if err := json.NewDecoder(rsp.Body).Decode(&p); err != nil {
-		return UserProfile{}, err
+		return UserProfile{}, rsp.Header, err
 	}
-	return p, nil
+	return p, rsp.Header, nil
+}
+
+// UserProfile returns the authenticated user's profile info.
+func (c *Client) UserProfile(id string) (UserProfile, error) {
+	u, _, err := c.UserProfileHeader(id)
+	return u, err
 }

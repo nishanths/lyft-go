@@ -1,7 +1,7 @@
 // Package lyft provides a client for Lyft's v1 HTTP API.
 // Lyft's API reference is available at https://developer.lyft.com/v1/docs/overview.
 //
-// Response header and Request-ID
+// Response Header and Request-ID
 //
 // Methods in this package that make requests to the Lyft API come in two variants.
 //
@@ -16,8 +16,13 @@
 // The returned header is useful for obtaining the unique Request-ID header
 // that Lyft sets in each response for debugging. For details see
 // https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes.
+// The Request-ID can be obtained from a header using the RequestID function.
 //
 // Errors
+//
+// When the HTTP roundtrip succeeds but there was an application-level error,
+// the error will be of type *StatusError, which can be inspected for more
+// details.
 //
 // Formats
 //
@@ -26,13 +31,13 @@
 //
 // Usage
 //
-// This example shows how to obtain an access token and use it find the
+// This example shows how to obtain an access token and find the
 // ride types available at a location.
 //
 //   // Obtain an access token using the two-legged or three-legged flows.
 //   t, err := twoleg.GenerateToken(http.DefaultClient, lyft.BaseURL, os.Getenv("CLIENT_ID"), os.Getenv("CLIENT_SECRET"))
 //   if err != nil {
-//      log.Fatalf("error generating token: %s", err)
+//       log.Fatalf("error generating token: %s", err)
 //   }
 //
 //   // Create a client.
@@ -45,7 +50,7 @@
 //   }
 //   log.Printf("%+v", r)
 //
-// Unsupported features
+// Missing Features
 //
 // The package does not yet support webhooks, rich error details,
 // rate limiting, and the sandbox routes.
@@ -68,10 +73,10 @@ const BaseURL = "https://api.lyft.com/v1"
 // client's fields are being modified at the same time.
 type Client struct {
 	AccessToken string
-	// Optional.
+
 	HTTPClient *http.Client // Uses http.DefaultClient if nil.
-	Header     http.Header  // Extra header to add.
-	BaseURL    string       // The base URL of the API; uses the package-level BaseURL if empty. Useful in testing.
+	Header     http.Header  // Extra request header to add.
+	BaseURL    string       // The base URL of the API; uses the package-level BaseURL if empty. Useful in tests.
 	debug      bool         // Dump requests/responses using package log's default logger.
 }
 
@@ -161,6 +166,10 @@ func (s *StatusError) Error() string {
 		return fmt.Sprintf("%s: status code: %d", s.Reason, s.StatusCode)
 	}
 	return fmt.Sprintf("status code: %d", s.StatusCode)
+}
+
+func RequestID(h http.Header) string {
+	return h.Get("Request-ID")
 }
 
 func index(v []string, target string) int {
