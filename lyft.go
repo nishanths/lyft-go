@@ -5,14 +5,18 @@ package lyft
 import (
 	"bytes"
 	"fmt"
+	"log"
 	"net/http"
+	"net/http/httputil"
 )
 
+// BaseURL is the base URL for Lyft's v1 HTTP API.
 const BaseURL = "https://api.lyft.com/v1"
 
-// Client is a client for the Lyft API. AccessToken must be set.
-// Methods are safe to use concurrently, unless the client's fields are being
-// modified at the same time.
+// Client is a client for the Lyft API.
+// AccessToken must be set for a client to be ready to use. The rest of the
+// fields are optional. Methods are goroutine safe, unless the
+// client's fields are being modified at the same time.
 type Client struct {
 	AccessToken string
 
@@ -20,16 +24,50 @@ type Client struct {
 	HTTPClient *http.Client // Uses http.DefaultClient if nil.
 	Header     http.Header  // Extra header to add.
 	BaseURL    string       // The base URL of the API; uses the package-level BaseURL if empty. Useful in testing.
+
+	debug bool // Dump requests/responses using package log's default logger.
+}
+
+func (c *Client) base() string {
+	if c.BaseURL == "" {
+		return BaseURL
+	}
+	return c.BaseURL
 }
 
 func (c *Client) do(r *http.Request) (*http.Response, error) {
+	// Set up headers and add credentials.
 	c.addHeader(r.Header)
 	c.authorize(r.Header)
+
+	// Determine the HTTP client to use.
 	client := http.DefaultClient
 	if c.HTTPClient != nil {
 		client = c.HTTPClient
 	}
-	return client.Do(r)
+
+	if c.debug {
+		dump, err := httputil.DumpRequestOut(r, true)
+		if err != nil {
+			log.Printf("dumping request: %s", err)
+		} else {
+			log.Printf("%s", dump)
+		}
+	}
+
+	// Do the request.
+	rsp, err := client.Do(r)
+
+	if c.debug {
+		dump, err := httputil.DumpResponse(rsp, true)
+		if err != nil {
+			log.Printf("dumping response: %s", err)
+		} else {
+			log.Printf("%s", dump)
+		}
+	}
+
+	return rsp, err
 }
 
 // addHeader adds the key/values in c.Header to h.
