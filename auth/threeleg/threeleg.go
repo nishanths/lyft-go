@@ -9,6 +9,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/nishanths/lyft"
 )
 
 // AuthorizationURL is the URL that a user should be directed to, in order for the user
@@ -43,8 +45,8 @@ type generateTokenResponse struct {
 	AccessToken  string
 	RefreshToken string
 	TokenType    string
-	Expires      int64    // seconds
-	Scopes       []string // space delimited
+	Expires      int64  // seconds
+	Scopes       string // space delimited
 }
 
 // RefreshTokenResponse is returned by RefreshToken.
