@@ -37,6 +37,7 @@ func GenerateToken(c *http.Client, clientID, clientSecret, code string) (Generat
 		return GenerateTokenResponse{}, err
 	}
 	defer rsp.Body.Close()
+
 	if rsp.StatusCode != 200 {
 		return GenerateTokenResponse{}, lyft.NewStatusError(rsp)
 	}

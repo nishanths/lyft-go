@@ -10,6 +10,7 @@ import (
 
 // TODO: Richer StatusError for all methods.
 
+// RideType is returned by the client's RideTypes method.
 type RideType struct {
 	DisplayName string  `json:"display_name"`
 	RideType    string  `json:"ride_type"`
@@ -28,8 +29,8 @@ type Pricing struct {
 	CancelPenalty   int    `json:"cancel_penalty_amout"`
 }
 
-func formatFloat(f float64) string {
-	return strconv.FormatFloat(f, 'f', -1, 64)
+func formatFloat(n float64) string {
+	return strconv.FormatFloat(n, 'f', -1, 64)
 }
 
 // RideTypes returns the ride types available at the location.
@@ -84,6 +85,7 @@ type rideEstimate struct {
 	Valid          bool    `json:"is_valid_estimate"`
 }
 
+// RideEstimate is returned by the client's RideEstimates method.
 type RideEstimate struct {
 	RideType       string
 	DisplayName    string
@@ -158,7 +160,7 @@ func (c *Client) RideEstimates(startLat, startLng, endLat, endLng float64, rideT
 	return response.C, nil
 }
 
-// Auxiliary for unmarshaling.
+// Auxiliary type for unmarshaling.
 type etaEstimate struct {
 	RideType    string `json:"ride_type"`
 	DisplayName string `json:"display_name"`
@@ -166,6 +168,7 @@ type etaEstimate struct {
 	Valid       bool   `json:"is_valid_estimate"`
 }
 
+// ETAEstimate is returned by the client's DriverETA method.
 type ETAEstimate struct {
 	RideType    string
 	DisplayName string
@@ -226,6 +229,7 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 	return response.E, nil
 }
 
+// NearbyDriver is returned by the client's DriversNearby method.
 type NearbyDriver struct {
 	Drivers  []DriverLocation `json:"drivers"`
 	RideType string           `json:"ride_type"`
@@ -240,6 +244,7 @@ type Location struct {
 	Longitude float64 `json:"lng"`
 }
 
+// DriversNearby returns the location of drivers near a location.
 func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(lat))

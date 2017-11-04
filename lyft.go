@@ -8,9 +8,9 @@ import (
 
 const BaseURL = "https://api.lyft.com/v1"
 
-// Client is a client for the Lyft API. AccessToken must be specified.
-// Methods that make requests to the Lyft API are safe to use concurrently,
-// except when the client's fields are being modified at the same time.
+// Client is a client for the Lyft API. AccessToken must be set.
+// Methods are safe to use concurrently, unless the client's fields are being
+// modified at the same time.
 type Client struct {
 	AccessToken string
 
@@ -48,7 +48,8 @@ func (c *Client) authorize(h http.Header) {
 }
 
 // StatusError is returned when the HTTP roundtrip succeeded, but there
-// was error was indicated via the HTTP status code.
+// was error was indicated via the HTTP status code, typically due to an
+// application level error.
 type StatusError struct {
 	StatusCode   int
 	Reason       string

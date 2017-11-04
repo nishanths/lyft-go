@@ -11,11 +11,10 @@ import (
 // AuthorizationURL returns the URL that a user should be directed to, in order
 // to grant the list of permissions your application is requesting.
 func AuthorizationURL(clientID string, scopes []string, state string) string {
-	v := url.Values{
-		"client_id": []string{clientID},
-		"scopes":    []string{strings.Join(scopes, " ")},
-		"state":     []string{state},
-	}
+	v := make(url.Values)
+	v.Set("client_id", clientID)
+	v.Set("scopes", strings.Join(scopes, " "))
+	v.Set("state", state)
 	return fmt.Sprintf("https://api.lyft.com/oauth/authorize?%s", v.Encode())
 }
 
