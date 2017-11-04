@@ -7,21 +7,20 @@ import (
 	"time"
 
 	"github.com/nishanths/lyft"
-	"github.com/nishanths/lyft/auth"
 )
 
 type GenerateTokenResponse struct {
 	AccessToken string
 	TokenType   string
 	Expires     time.Duration
-	Scopes      []auth.Scope
+	Scopes      []string
 }
 
 type generateTokenResponse struct {
 	AccessToken string `json:"access_token"`
 	TokenType   string `json:"token_type"`
-	ExpiresIn   int64  `json:"expires_in"` // seconds
-	Scope       string `json:"scope"`      // space delimited
+	Expires     int64  `json:"expires_in"` // seconds
+	Scopes      string `json:"scope"`      // space delimited
 }
 
 func GenerateToken(c *http.Client, clientID, clientSecret, code string) (GenerateTokenResponse, error) {
@@ -33,30 +32,23 @@ func GenerateToken(c *http.Client, clientID, clientSecret, code string) (Generat
 	r.Header.Set("Content-Type", "application/json")
 	r.SetBasicAuth(clientID, clientSecret)
 
-	rsp, err := c.Do(req)
+	rsp, err := c.Do(r)
 	if err != nil {
-		return err
+		return GenerateTokenResponse{}, err
 	}
 	defer rsp.Body.Close()
 	if rsp.StatusCode != 200 {
-		return nil, lyft.NewStatusError(rsp)
+		return GenerateTokenResponse{}, lyft.NewStatusError(rsp)
 	}
 
 	var g generateTokenResponse
 	if err := json.NewDecoder(rsp.Body).Decode(&g); err != nil {
-		return nil, err
+		return GenerateTokenResponse{}, err
 	}
-
-	fields := strings.Fields(g.Scope)
-	scopes := make([]auth.Scope, len(fields))
-	for i, f := range fields {
-		scopes[i] = auth.Scope(f)
-	}
-
 	return GenerateTokenResponse{
 		AccessToken: g.AccessToken,
 		TokenType:   g.TokenType,
-		Expires:     time.Second * g.ExpiresIn,
-		Scopes:      scopes,
+		Expires:     time.Second * time.Duration(g.Expires),
+		Scopes:      strings.Fields(g.Scopes),
 	}, nil
 }

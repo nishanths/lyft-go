@@ -1,13 +1,12 @@
 package auth
 
-type Scope string
-
+// Scopes.
 const (
-	Public       Scope = "public"
-	RidesRead    Scope = "rides.read"
-	Offline      Scope = "offline"
-	RidesRequest Scope = "rides.request"
-	Profile      Scope = "rides.profile"
+	Public       = "public"
+	RidesRead    = "rides.read"
+	Offline      = "offline"
+	RidesRequest = "rides.request"
+	Profile      = "rides.profile"
 )
 
 // Possible values for the Reason field in StatusError.
