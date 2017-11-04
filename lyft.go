@@ -3,16 +3,14 @@
 //
 // Response Header and Request-ID
 //
-// Methods in this package that make requests to the Lyft API come in two variants.
+// Methods on the client typically have a signature like:
 //
-//  func (c *Client) FooHeader (T, http.Header, error)
+//  func (c *Client) Foo (T, http.Header, error)
 //  func (c *Client) Foo (T, error)
 //
-// They are equivalent, except that the first form includes the HTTP response
-// header in its return type. The returned header is safe to access
+// The returned header is the the HTTP response header. It is safe to access
 // when the error is nil or the error is of type *StatusError.
 //
-// In most scenarios, consumers of the package will typically use the Foo variant.
 // The returned header is useful for obtaining the unique Request-ID header
 // that Lyft sets in each response for debugging. For details see
 // https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes.
@@ -168,7 +166,7 @@ func (s *StatusError) Error() string {
 	return fmt.Sprintf("status code: %d", s.StatusCode)
 }
 
-// RequestID returns the value for the Request-ID key in the header.
+// RequestID gets the value of the Request-ID key in the header.
 func RequestID(h http.Header) string {
 	return h.Get("Request-ID")
 }

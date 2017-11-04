@@ -31,7 +31,11 @@ func formatFloat(n float64) string {
 	return strconv.FormatFloat(n, 'f', -1, 64)
 }
 
-func (c *Client) RideTypesHeader(lat, lng float64, rideType string) ([]RideType, http.Header, error) {
+// RideTypes returns the ride types available at the location.
+// The rideType is optional. If set, details will be returned for the specified
+// ride type only. If no ride types are available, the error will
+// be a StatusError.
+func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(lat))
 	vals.Set("lng", formatFloat(lng))
@@ -60,15 +64,6 @@ func (c *Client) RideTypesHeader(lat, lng float64, rideType string) ([]RideType,
 		return nil, rsp.Header, err
 	}
 	return response.RideTypes, rsp.Header, nil
-}
-
-// RideTypes returns the ride types available at the location.
-// The rideType is optional. If set, details will be returned for the specified
-// ride type only. If no ride types are available, the error will
-// be a StatusError.
-func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, error) {
-	r, _, err := c.RideTypesHeader(lat, lng, rideType)
-	return r, err
 }
 
 // CostEstimate is returned by the client's CostEstimates method.
@@ -118,7 +113,11 @@ func (r *CostEstimate) UnmarshalJSON(p []byte) error {
 // that has an optional float64 argument.
 const IgnoreArg float64 = -181 // so that valid longitudes aren't ignored.
 
-func (c *Client) CostEstimatesHeader(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, http.Header, error) {
+// CostEstimates returns the estimated cost, distance, and duration of a ride.
+// The end locations are optional and are ignored if the value equals
+// the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
+// will be returned for the specified type only.
+func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("start_lat", formatFloat(startLat))
 	vals.Set("start_lng", formatFloat(startLng))
@@ -155,15 +154,6 @@ func (c *Client) CostEstimatesHeader(startLat, startLng, endLat, endLng float64,
 	return response.C, rsp.Header, nil
 }
 
-// CostEstimates returns the estimated cost, distance, and duration of a ride.
-// The end locations are optional and are ignored if the value equals
-// the package-level const IgnoreArg. rideType is also optional; if it is set, estimates
-// will be returned for the specified type only.
-func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideType string) ([]CostEstimate, error) {
-	ce, _, err := c.CostEstimatesHeader(startLat, startLng, endLat, endLng, rideType)
-	return ce, err
-}
-
 // ETAEstimate is returned by the client's DriverETA method.
 type ETAEstimate struct {
 	RideType    string
@@ -191,7 +181,11 @@ func (e *ETAEstimate) UnmarshalJSON(p []byte) error {
 	return nil
 }
 
-func (c *Client) DriverETAHeader(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, http.Header, error) {
+// DriverETA estimates the time for the nearest driver to reach the specifed location.
+// The end locations are optional and are ignored if the value equals the
+// package-level const IgnoreArg. The rideType argument is also optional. If set,
+// estimates will be returned for the specified type only.
+func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(startLat))
 	vals.Set("lng", formatFloat(startLng))
@@ -228,15 +222,6 @@ func (c *Client) DriverETAHeader(startLat, startLng, endLat, endLng float64, rid
 	return response.E, rsp.Header, nil
 }
 
-// DriverETA estimates the time for the nearest driver to reach the specifed location.
-// The end locations are optional and are ignored if the value equals the
-// package-level const IgnoreArg. The rideType argument is also optional. If set,
-// estimates will be returned for the specified type only.
-func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType string) ([]ETAEstimate, error) {
-	e, _, err := c.DriverETAHeader(startLat, startLng, endLat, endLng, rideType)
-	return e, err
-}
-
 // NearbyDriver is returned by the client's DriversNearby method.
 type NearbyDriver struct {
 	Drivers  []Driver `json:"drivers"`
@@ -252,7 +237,8 @@ type DriverLocation struct {
 	Longitude float64 `json:"lng"`
 }
 
-func (c *Client) DriversNearbyHeader(lat, lng float64) ([]NearbyDriver, http.Header, error) {
+// DriversNearby returns the location of drivers near a location.
+func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, http.Header, error) {
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(lat))
 	vals.Set("lng", formatFloat(lng))
@@ -278,10 +264,4 @@ func (c *Client) DriversNearbyHeader(lat, lng float64) ([]NearbyDriver, http.Hea
 		return nil, rsp.Header, err
 	}
 	return response.N, rsp.Header, nil
-}
-
-// DriversNearby returns the location of drivers near a location.
-func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, error) {
-	n, _, err := c.DriversNearbyHeader(lat, lng)
-	return n, err
 }

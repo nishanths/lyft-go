@@ -64,7 +64,10 @@ type refToken struct {
 	Scopes      string // space delimited
 }
 
-func GenerateTokenHeader(c *http.Client, baseURL, clientID, clientSecret, code string) (Token, http.Header, error) {
+// GenerateToken creates a new access token using the authorization code
+// obtained from Lyft's authorization redirect. The access token
+// returned can be used in lyft.Client. baseURL is typically lyft.BaseURL.
+func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (Token, http.Header, error) {
 	body := fmt.Sprintf(`{"grant_type": "authorization_code", "code": "%s"}`, code)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
@@ -96,15 +99,10 @@ func GenerateTokenHeader(c *http.Client, baseURL, clientID, clientSecret, code s
 	}, rsp.Header, nil
 }
 
-// GenerateToken creates a new access token using the authorization code
-// obtained from Lyft's authorization redirect. The access token
-// returned can be used in lyft.Client. baseURL is typically lyft.BaseURL.
-func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (Token, error) {
-	g, _, err := GenerateTokenHeader(c, baseURL, clientID, clientSecret, code)
-	return g, err
-}
-
-func RefreshTokenHeader(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefToken, http.Header, error) {
+// RefreshToken refreshes the access token associated with refreshToken.
+// See Token for obtaining access/refresh token pairs.
+// baseURL is typically lyft.BaseURL.
+func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefToken, http.Header, error) {
 	body := fmt.Sprintf(`{"grant_type": "refresh_token", "refresh_token": "%s"}`, refreshToken)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
@@ -135,15 +133,9 @@ func RefreshTokenHeader(c *http.Client, baseURL, clientID, clientSecret, refresh
 	}, rsp.Header, nil
 }
 
-// RefreshToken refreshes the access token associated with refreshToken.
-// See Token for obtaining access/refresh token pairs.
+// RevokeToken revokes the supplied access token.
 // baseURL is typically lyft.BaseURL.
-func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefToken, error) {
-	r, _, err := RefreshTokenHeader(c, baseURL, clientID, clientSecret, refreshToken)
-	return r, err
-}
-
-func RevokeTokenHeader(c *http.Client, baseURL, clientID, clientSecret, accessToken string) (http.Header, error) {
+func RevokeToken(c *http.Client, baseURL, clientID, clientSecret, accessToken string) (http.Header, error) {
 	body := fmt.Sprintf(`{"token": "%s"}`, accessToken)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/revoke_refresh_token", strings.NewReader(body))
 	if err != nil {
@@ -162,11 +154,4 @@ func RevokeTokenHeader(c *http.Client, baseURL, clientID, clientSecret, accessTo
 		return rsp.Header, lyft.NewStatusError(rsp)
 	}
 	return rsp.Header, nil
-}
-
-// RevokeToken revokes the supplied access token.
-// baseURL is typically lyft.BaseURL.
-func RevokeToken(c *http.Client, baseURL, clientID, clientSecret, accessToken string) error {
-	_, err := RevokeTokenHeader(c, baseURL, clientID, clientSecret, accessToken)
-	return err
 }

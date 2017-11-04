@@ -26,7 +26,10 @@ type token struct {
 	Scopes      string `json:"scope"`      // space delimited
 }
 
-func GenerateTokenHeader(c *http.Client, baseURL, clientID, clientSecret string) (Token, http.Header, error) {
+// GenerateToken creates a new access token.
+// The access token returned can be used in lyft.Client.
+// baseURL is typically lyft.BaseURL.
+func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Token, http.Header, error) {
 	body := `{"grant_type": "client_credentials", "scope": "public"}`
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
@@ -55,12 +58,4 @@ func GenerateTokenHeader(c *http.Client, baseURL, clientID, clientSecret string)
 		Expires:     time.Second * time.Duration(g.Expires),
 		Scopes:      strings.Fields(g.Scopes),
 	}, rsp.Header, nil
-}
-
-// GenerateToken creates a new access token.
-// The access token returned can be used in lyft.Client.
-// baseURL is typically lyft.BaseURL.
-func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Token, error) {
-	g, _, err := GenerateTokenHeader(c, baseURL, clientID, clientSecret)
-	return g, err
 }

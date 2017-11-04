@@ -231,7 +231,15 @@ func (h *RideHistory) UnmarshalJSON(p []byte) error {
 	return aux.convert(h)
 }
 
-func (c *Client) RideHistoryHeader(start, end time.Time, limit int32) ([]RideHistory, http.Header, error) {
+// RideHistory returns the authenticated user's current and past rides.
+// See the Lyft API reference for details on how far back the
+// start and end times can go. If end is the zero time it is ignored.
+// Limit specifies the maximum number of rides to return. If limit is -1,
+// RideHistory requests the maximum limit documented in the API reference (50).
+//
+// Implementation detail: The times, in UTC, are formatted using "2006-01-02T15:04:05Z".
+// For example: start.UTC().Format("2006-01-02T15:04:05Z").
+func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, http.Header, error) {
 	const layout = "2006-01-02T15:04:05Z"
 
 	vals := make(url.Values)
@@ -268,19 +276,6 @@ func (c *Client) RideHistoryHeader(start, end time.Time, limit int32) ([]RideHis
 	return response.R, rsp.Header, nil
 }
 
-// RideHistory returns the authenticated user's current and past rides.
-// See the Lyft API reference for details on how far back the
-// start and end times can go. If end is the zero time it is ignored.
-// Limit specifies the maximum number of rides to return. If limit is -1,
-// RideHistory requests the maximum limit documented in the API reference (50).
-//
-// Implementation detail: The times, in UTC, are formatted using "2006-01-02T15:04:05Z".
-// For example: start.UTC().Format("2006-01-02T15:04:05Z").
-func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, error) {
-	r, _, err := c.RideHistoryHeader(start, end, limit)
-	return r, err
-}
-
 // UserProfile is returned by the client's UserProfile method.
 type UserProfile struct {
 	ID        string `json:"id"` // Authenticated user's ID.
@@ -289,7 +284,8 @@ type UserProfile struct {
 	Ridden    bool   `json:"has_taken_a_ride"` // Whether the user has taken at least one ride.
 }
 
-func (c *Client) UserProfileHeader(id string) (UserProfile, http.Header, error) {
+// UserProfile returns the authenticated user's profile info.
+func (c *Client) UserProfile(id string) (UserProfile, http.Header, error) {
 	r, err := http.NewRequest("GET", c.base()+"/v1/profile", nil)
 	if err != nil {
 		return UserProfile{}, nil, err
@@ -311,10 +307,4 @@ func (c *Client) UserProfileHeader(id string) (UserProfile, http.Header, error) 
 		return UserProfile{}, rsp.Header, err
 	}
 	return p, rsp.Header, nil
-}
-
-// UserProfile returns the authenticated user's profile info.
-func (c *Client) UserProfile(id string) (UserProfile, error) {
-	u, _, err := c.UserProfileHeader(id)
-	return u, err
 }
