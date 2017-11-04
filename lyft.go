@@ -139,7 +139,7 @@ func (c *Client) authorize(h http.Header) {
 
 // StatusError is returned when the HTTP roundtrip succeeded, but there
 // was error was indicated via the HTTP status code, typically due to an
-// application level error.
+// application-level error.
 type StatusError struct {
 	StatusCode   int
 	Reason       string
@@ -170,13 +170,4 @@ func (s *StatusError) Error() string {
 // RequestID gets the value of the Request-ID key in the header.
 func RequestID(h http.Header) string {
 	return h.Get("Request-ID")
-}
-
-func index(v []string, target string) int {
-	for i, s := range v {
-		if s == target {
-			return i
-		}
-	}
-	return -1
 }
