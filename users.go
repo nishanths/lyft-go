@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Ride status.
+// Ride statuses.
 const (
 	StatusPending    = "pending"
 	StatusAccepted   = "accepted"
@@ -140,6 +140,8 @@ func (c cancellationPrice) convert(res *CancellationPrice) {
 }
 
 // RideHistory is returned by the client's RideHistory method.
+// Some fields are available only if certain conditions are true
+// at the time of making the request. See the API reference for details.
 type RideHistory struct {
 	RideID              string
 	RideStatus          string

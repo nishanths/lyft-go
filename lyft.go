@@ -1,3 +1,5 @@
+// Package lyft provides a client for Lyft's v1 HTTP API.
+// Lyft's API reference is available at https://developer.lyft.com/v1/docs/overview.
 package lyft
 
 import (
@@ -23,7 +25,6 @@ type Client struct {
 func (c *Client) do(r *http.Request) (*http.Response, error) {
 	c.addHeader(r.Header)
 	c.authorize(r.Header)
-
 	client := http.DefaultClient
 	if c.HTTPClient != nil {
 		client = c.HTTPClient
@@ -63,7 +64,6 @@ type StatusError struct {
 func NewStatusError(rsp *http.Response) *StatusError {
 	var buf bytes.Buffer
 	buf.ReadFrom(rsp.Body) // ignore errors
-
 	return &StatusError{
 		StatusCode:   rsp.StatusCode,
 		Reason:       rsp.Header.Get("error"),

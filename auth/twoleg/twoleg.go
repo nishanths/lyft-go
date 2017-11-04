@@ -11,6 +11,7 @@ import (
 	"github.com/nishanths/lyft"
 )
 
+// GenerateTokenResponse is returned by GenerateToken.
 type GenerateTokenResponse struct {
 	AccessToken string
 	TokenType   string
@@ -25,9 +26,12 @@ type generateTokenResponse struct {
 	Scopes      string `json:"scope"`      // space delimited
 }
 
+// GenerateToken creates a new access token.
+// The access token returned can be used in lyft.Client.
+// baseURL is typically lyft.BaseURL.
 func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string) (GenerateTokenResponse, error) {
-	body := strings.NewReader(`{"grant_type": "client_credentials", "scope": "public"}`)
-	r, err := http.NewRequest("POST", baseURL+"/oauth/token", body)
+	body := `{"grant_type": "client_credentials", "scope": "public"}`
+	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
 		return GenerateTokenResponse{}, err
 	}
