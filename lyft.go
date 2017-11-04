@@ -1,5 +1,8 @@
 // Package lyft provides a client for Lyft's v1 HTTP API.
 // Lyft's API reference is available at https://developer.lyft.com/v1/docs/overview.
+//
+// It does not yet support webhooks, rich error details, extracting the Request-ID header,
+// rate limiting, and the sandbox routes.
 package lyft
 
 import (
