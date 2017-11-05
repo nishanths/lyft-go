@@ -262,7 +262,6 @@ func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, 
 	}
 	defer rsp.Body.Close()
 
-	// TODO: this has more details in the error response.
 	if rsp.StatusCode != 200 {
 		return nil, rsp.Header, NewStatusError(rsp)
 	}
@@ -297,7 +296,6 @@ func (c *Client) UserProfile(id string) (UserProfile, http.Header, error) {
 	}
 	defer rsp.Body.Close()
 
-	// TODO: this has more details in the error response.
 	if rsp.StatusCode != 200 {
 		return UserProfile{}, rsp.Header, NewStatusError(rsp)
 	}
