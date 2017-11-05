@@ -51,16 +51,17 @@
 //
 // Missing Features
 //
-// The package does not yet support webhooks, rich error details,
-// rate limiting, and the sandbox routes.
+// The package does not yet support webhooks and the sandbox routes.
 package lyft
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/http/httputil"
+	"strconv"
 )
 
 // BaseURL is the base URL for Lyft's v1 HTTP API.
@@ -142,8 +143,18 @@ func (c *Client) authorize(h http.Header) {
 // application-level error.
 type StatusError struct {
 	StatusCode   int
-	Reason       string
 	ResponseBody bytes.Buffer
+	// The following fields may be empty.
+	Error       string
+	Details     []map[string]string
+	Description string
+}
+
+// See https://developer.lyft.com/v1/docs/errors.
+type errType struct {
+	Slug        string              `json:"error"`
+	Details     []map[string]string `json:"error_detail"`
+	Description string              `json:"error_description"`
 }
 
 // NewStatusError constructs a StatusError from the response. It exists
@@ -151,12 +162,28 @@ type StatusError struct {
 // StatusError using the canonical way. Not meant for external use.
 // Does not close rsp.Body.
 func NewStatusError(rsp *http.Response) *StatusError {
-	var buf bytes.Buffer
+	var buf bytes.Buffer   // for the ResponseBody
 	buf.ReadFrom(rsp.Body) // ignore errors
+
+	decodeBuf := bytes.NewBuffer(buf.Bytes()) // to parse the response body
+	var errTyp errType
+	decodeErr := json.NewDecoder(&decodeBuf).Decode(&errTyp)
+
+	// Determine the value for the Error field.
+	var e string
+	v := rsp.Header["error"]
+	if len(v) != 0 {
+		e = v[0]
+	} else if decodeErr == nil {
+		e = errTyp.Slug
+	}
+
 	return &StatusError{
 		StatusCode:   rsp.StatusCode,
-		Reason:       rsp.Header.Get("error"),
 		ResponseBody: buf,
+		Error:        e,
+		Details:      errTyp.Details, // safe to access even if decodeErr != nil
+		Description:  errTyp.Description,
 	}
 }
 
@@ -167,7 +194,48 @@ func (s *StatusError) Error() string {
 	return fmt.Sprintf("status code: %d", s.StatusCode)
 }
 
-// RequestID gets the value of the Request-ID key in the header.
+// IsRateLimit returns whether the error arose because of running into a
+// rate limit.
+func IsRateLimit(err error) bool {
+	if se, ok := err.(*StatusError); ok {
+		return se.StatusCode == 429
+	}
+	return false
+}
+
+// IsTokenExpired returns true if the error arose because the access token
+// expired.
+func IsTokenExpired(err error) bool {
+	if se, ok := err.(*StatusError); ok {
+		// https://developer.lyft.com/v1/docs/authentication#section-http-status-codes
+		return se.StatusCode == 401 && len(se.ResponseBody.Bytes()) == 0
+	}
+	return false
+}
+
+// RequestID gets the value of the Request-ID key from a response header.
 func RequestID(h http.Header) string {
 	return h.Get("Request-ID")
+}
+
+// RateRemaining returns the value of X-Ratelimit-Remaining.
+func RateRemaining(h http.Header) (n int, ok bool) {
+	return intHeaderValue(h, "X-Ratelimit-Remaining")
+}
+
+// RateRemaining returns the value of X-Ratelimit-Limit.
+func RateLimit(h http.Header) (n int, ok bool) {
+	return intHeaderValue(h, "X-Ratelimit-Limit")
+}
+
+func intHeaderValue(h http.Header, k string) (int, bool) {
+	vals, ok := h[k]
+	if !ok || len(vals) == 0 {
+		return 0, false
+	}
+	i, err := strconv.Atoi(vals[0])
+	if err != nil {
+		return 0, false
+	}
+	return i, true
 }

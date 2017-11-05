@@ -182,7 +182,7 @@ type RideLocation struct {
 type VehicleLocation struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
-	Bearing   float64 `json:"bearing"`
+	Bearing   float64 `json:"bearing"` // Bearing of the driver’s car in degrees.
 }
 
 type Person struct {

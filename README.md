@@ -4,7 +4,7 @@ Go client for v1 of lyft.com's HTTP API.
 
 `go get github.com/nishanths/lyft/...`
 
-No API guarantees yet. Please vendor.
+No API guarantees yet, so please vendor.
 
 ### Docs
 
