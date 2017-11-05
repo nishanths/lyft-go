@@ -1,6 +1,6 @@
 // Package twoleg provides functions for working with the two-legged
 // OAuth flow described at https://developer.lyft.com/v1/docs/authentication#section-client-credentials-2-legged-flow-for-public-endpoints.
-package twoleg
+package twoleg // import "go.avalanche.space/lyft/auth/twoleg"
 
 import (
 	"encoding/json"

@@ -50,7 +50,7 @@
 // Missing Features
 //
 // The package does not yet support webhooks and the sandbox routes.
-package lyft
+package lyft // import "go.avalanche.space/lyft"
 
 import (
 	"bytes"

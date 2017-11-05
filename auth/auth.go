@@ -1,6 +1,6 @@
 // Package auth and its subpackages define types and functions
 // related to Lyft's OAuth flows.
-package auth
+package auth // import "go.avalanche.space/lyft/auth"
 
 // Scopes.
 const (
