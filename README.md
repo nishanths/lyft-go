@@ -1,16 +1,16 @@
 ## lyft
 
-Go client for v1 of lyft.com's HTTP API.
-
-`go get github.com/nishanths/lyft/...`
+Go client for v1 of lyft.com's HTTP API. 
 
 No API guarantees yet, so please vendor.
 
+`go get go.avalanche.space/lyft/...`
+
 ### Docs
 
-Godoc: https://godoc.org/github.com/nishanths/lyft
+[Godoc](https://godoc.org/go.avalanche.space/lyft)
 
-See the [Usage](https://godoc.org/github.com/nishanths/lyft#hdr-Usage) section 
+See the [Usage](https://godoc.org/go.avalanche.space/lyft#hdr-Usage) section 
 for a usage example.
 
 ### License
