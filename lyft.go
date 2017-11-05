@@ -138,6 +138,14 @@ func (c *Client) authorize(h http.Header) {
 	h.Add("Authorization", "Bearer "+c.AccessToken)
 }
 
+// Possible values for the Reason field in StatusError.
+const (
+	InvalidToken         = "invalid_token"
+	TokenExpired         = "token_expired"
+	InsufficientScope    = "insufficient_scope"
+	UnsupportedGrantType = "unsupported_grant_type"
+)
+
 // StatusError is returned when the HTTP roundtrip succeeded, but there
 // was error was indicated via the HTTP status code, typically due to an
 // application-level error.
@@ -145,7 +153,7 @@ type StatusError struct {
 	StatusCode   int
 	ResponseBody bytes.Buffer
 	// The following fields may be empty.
-	Error       string
+	Reason      string
 	Details     []map[string]string
 	Description string
 }
@@ -167,9 +175,10 @@ func NewStatusError(rsp *http.Response) *StatusError {
 
 	decodeBuf := bytes.NewBuffer(buf.Bytes()) // to parse the response body
 	var errTyp errType
-	decodeErr := json.NewDecoder(&decodeBuf).Decode(&errTyp)
+	decodeErr := json.NewDecoder(decodeBuf).Decode(&errTyp)
 
-	// Determine the value for the Error field.
+	// Determine the value for the Reason field; from the header
+	// otherwise from the body.
 	var e string
 	v := rsp.Header["error"]
 	if len(v) != 0 {
@@ -181,7 +190,7 @@ func NewStatusError(rsp *http.Response) *StatusError {
 	return &StatusError{
 		StatusCode:   rsp.StatusCode,
 		ResponseBody: buf,
-		Error:        e,
+		Reason:       e,
 		Details:      errTyp.Details, // safe to access even if decodeErr != nil
 		Description:  errTyp.Description,
 	}
@@ -208,7 +217,8 @@ func IsRateLimit(err error) bool {
 func IsTokenExpired(err error) bool {
 	if se, ok := err.(*StatusError); ok {
 		// https://developer.lyft.com/v1/docs/authentication#section-http-status-codes
-		return se.StatusCode == 401 && len(se.ResponseBody.Bytes()) == 0
+		// There doesn't seem to be a canonical way?
+		return (se.StatusCode == 401 && len(se.ResponseBody.Bytes()) == 0) || se.Reason == TokenExpired
 	}
 	return false
 }

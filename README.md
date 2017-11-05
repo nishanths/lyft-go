@@ -11,7 +11,7 @@ No API guarantees yet, so please vendor.
 godoc: https://godoc.org/github.com/nishanths/lyft
 
 See the [Usage](https://godoc.org/github.com/nishanths/lyft#hdr-Usage) section 
-for an usage example.
+for a usage example.
 
 ### License
 
