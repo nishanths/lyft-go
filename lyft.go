@@ -6,15 +6,13 @@
 // Methods on the client typically have a signature like:
 //
 //  func (c *Client) Foo (T, http.Header, error)
-//  func (c *Client) Foo (T, error)
 //
 // The returned header is the the HTTP response header. It is safe to access
 // when the error is nil or the error is of type *StatusError.
 //
-// The returned header is useful for obtaining the unique Request-ID header
-// that Lyft sets in each response for debugging. For details see
+// The returned header is useful for obtaining the rate limit header and unique
+// Request-ID header set by Lyft. For details, see
 // https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes.
-// The Request-ID can be obtained from a header using the RequestID function.
 //
 // Errors
 //
@@ -73,7 +71,7 @@ const BaseURL = "https://api.lyft.com/v1"
 // client's fields are being modified at the same time.
 type Client struct {
 	AccessToken string
-
+	// The following fields are optional.
 	HTTPClient *http.Client // Uses http.DefaultClient if nil.
 	Header     http.Header  // Extra request header to add.
 	BaseURL    string       // The base URL of the API; uses the package-level BaseURL if empty. Useful in tests.

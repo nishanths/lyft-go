@@ -8,7 +8,7 @@ No API guarantees yet, so please vendor.
 
 ### Docs
 
-godoc: https://godoc.org/github.com/nishanths/lyft
+Godoc: https://godoc.org/github.com/nishanths/lyft
 
 See the [Usage](https://godoc.org/github.com/nishanths/lyft#hdr-Usage) section 
 for a usage example.
