@@ -10,3 +10,9 @@ const (
 	RidesRequest = "rides.request"
 	Profile      = "rides.profile"
 )
+
+// SandboxSecret returns the sandboxed form of an non-sandboxed client secret.
+// See https://developer.lyft.com/v1/docs/sandbox.
+func SandboxSecret(clientSecret string) string {
+	return "SANDBOX-" + clientSecret
+}
