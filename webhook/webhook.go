@@ -1,6 +1,6 @@
 // Package webhook provides types and utility functions for handling
 // Lyft webhooks.
-package webhook // import "go.avalanche.space/lyft/webhook"
+package webhook // import "go.avalanche.space/lyft-go/webhook"
 
 import (
 	"bytes"
@@ -129,11 +129,18 @@ func DecodeEvent(requestBody io.ReadCloser, h http.Header, verificationToken []b
 		return e, ErrVerify // verification failed
 	}
 
-	err := json.NewDecoder(decodeBuf).Decode(&e)
-	return e, err
+	return e, unmarshal(decodeBuf, &e)
 }
 
 func drainAndClose(r io.ReadCloser) {
 	io.Copy(ioutil.Discard, r)
 	r.Close()
+}
+
+func unmarshal(r io.Reader, v interface{}) error {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, v)
 }

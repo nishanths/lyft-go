@@ -1,6 +1,6 @@
 // Package threeleg provides functions for working with the three-legged
 // OAuth flow described at https://developer.lyft.com/v1/docs/authentication#section-3-legged-flow-for-accessing-user-specific-endpoints.
-package threeleg // import "go.avalanche.space/lyft/auth/threeleg"
+package threeleg // import "go.avalanche.space/lyft-go/auth/threeleg"
 
 import (
 	"encoding/json"
@@ -21,7 +21,7 @@ func AuthorizationURL(clientID string, scopes []string, state string) string {
 	v := make(url.Values)
 	v.Set("client_id", clientID)
 	v.Set("response_type", "code") // only possible value
-	v.Set("scopes", strings.Join(scopes, " "))
+	v.Set("scope", strings.Join(scopes, " "))
 	v.Set("state", state)
 	return fmt.Sprintf("https://api.lyft.com/oauth/authorize?%s", v.Encode())
 }
@@ -44,11 +44,11 @@ type Token struct {
 }
 
 type token struct {
-	AccessToken  string
-	RefreshToken string
-	TokenType    string
-	Expires      int64  // seconds
-	Scopes       string // space delimited
+	AccessToken  string `json:"access_token"`
+	RefreshToken string `json:"refresh_token"`
+	TokenType    string `json:"token_type"`
+	Expires      int64  `json:"expires_in"` // seconds
+	Scopes       string `json:"scope"`      // space delimited
 }
 
 // RefreshedToken is returned by RefreshToken.
@@ -60,10 +60,10 @@ type RefreshedToken struct {
 }
 
 type refreshedToken struct {
-	AccessToken string
-	TokenType   string
-	Expires     int64  // seconds
-	Scopes      string // space delimited
+	AccessToken string `json:"access_token"`
+	TokenType   string `json:"token_type"`
+	Expires     int64  `json:"expires_in"` // seconds
+	Scopes      string `json:"scope"`      // space delimited
 }
 
 // GenerateToken creates a new access token using the authorization code
@@ -89,7 +89,7 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string)
 	}
 
 	var g token
-	if err := json.NewDecoder(rsp.Body).Decode(&g); err != nil {
+	if err := unmarshal(rsp.Body, &g); err != nil {
 		return Token{}, rsp.Header, err
 	}
 	return Token{
@@ -124,7 +124,7 @@ func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken 
 	}
 
 	var ref refreshedToken
-	if err := json.NewDecoder(rsp.Body).Decode(&ref); err != nil {
+	if err := unmarshal(rsp.Body, &ref); err != nil {
 		return RefreshedToken{}, rsp.Header, err
 	}
 	return RefreshedToken{
@@ -163,4 +163,12 @@ func RevokeToken(c *http.Client, baseURL, clientID, clientSecret, accessToken st
 func drainAndClose(r io.ReadCloser) {
 	io.Copy(ioutil.Discard, r)
 	r.Close()
+}
+
+func unmarshal(r io.Reader, v interface{}) error {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, v)
 }

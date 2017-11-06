@@ -1,4 +1,4 @@
-package lyft // import "go.avalanche.space/lyft"
+package lyft // import "go.avalanche.space/lyft-go"
 
 import (
 	"bytes"
@@ -105,7 +105,7 @@ type ErrorInfo struct {
 
 func newErrorInfo(body io.Reader, h http.Header) ErrorInfo {
 	var lyftErr lyftError
-	decodeErr := json.NewDecoder(body).Decode(&lyftErr)
+	decodeErr := unmarshal(body, &lyftErr)
 
 	// Determine the value for the Reason field; from the header
 	// otherwise from the body.
@@ -168,9 +168,9 @@ func newStatusError(rsp *http.Response) *StatusError {
 
 func (s *StatusError) Error() string {
 	if s.Reason != "" {
-		return fmt.Sprintf("%s: status code: %d", s.Reason, s.StatusCode)
+		return fmt.Sprintf("%s: status code=%d", s.Reason, s.StatusCode)
 	}
-	return fmt.Sprintf("status code: %d", s.StatusCode)
+	return fmt.Sprintf("status code=%d", s.StatusCode)
 }
 
 // See https://developer.lyft.com/v1/docs/errors.
@@ -230,4 +230,12 @@ func intHeaderValue(h http.Header, k string) (int, bool) {
 func drainAndClose(r io.ReadCloser) {
 	io.Copy(ioutil.Discard, r)
 	r.Close()
+}
+
+func unmarshal(r io.Reader, v interface{}) error {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, v)
 }

@@ -19,6 +19,26 @@ const (
 	StatusUnknown    = "unknown"
 )
 
+func RideStatusDisplay(s string) string {
+	switch s {
+	case StatusPending:
+		return "Pending"
+	case StatusAccepted:
+		return "Accepted"
+	case StatusArrived:
+		return "Arrived"
+	case StatusPickedUp:
+		return "Picked up"
+	case StatusDroppedOff:
+		return "Dropped off"
+	case StatusCanceled:
+		return "Canceled"
+	case StatusUnknown:
+		return "Unknown"
+	}
+	return s
+}
+
 // Ride profiles.
 const (
 	ProfileBusiness = "business"
@@ -156,10 +176,10 @@ type RideDetail struct {
 	RideID              string
 	RideStatus          string
 	RideType            string
-	Origin              RideLocation // The Time field will not be set
-	Pickup              RideLocation // The ETA field will not be set
-	Destination         RideLocation // The Time field will not be set
-	Dropoff             RideLocation // The ETA field will not be set
+	Origin              RideLocation // Requested location of pickup. The Time field will not be set.
+	Pickup              RideLocation // Actual location of pickup. The ETA field will not be set.
+	Destination         RideLocation // Requested location of dropoff. The Time field will not be set.
+	Dropoff             RideLocation // Actual location of dropoff. The ETA field will not be set.
 	Location            VehicleLocation
 	Passenger           Person
 	Driver              Person
@@ -279,7 +299,7 @@ func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideDetail, h
 	var response struct {
 		R []RideDetail `json:"ride_history"`
 	}
-	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+	if err := unmarshal(rsp.Body, &response); err != nil {
 		return nil, rsp.Header, err
 	}
 	return response.R, rsp.Header, nil
@@ -311,7 +331,7 @@ func (c *Client) UserProfile(id string) (UserProfile, http.Header, error) {
 	}
 
 	var p UserProfile
-	if err := json.NewDecoder(rsp.Body).Decode(&p); err != nil {
+	if err := unmarshal(rsp.Body, &p); err != nil {
 		return UserProfile{}, rsp.Header, err
 	}
 	return p, rsp.Header, nil

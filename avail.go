@@ -60,7 +60,7 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, http.
 	var response struct {
 		RideTypes []RideType `json:"ride_types"`
 	}
-	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+	if err := unmarshal(rsp.Body, &response); err != nil {
 		return nil, rsp.Header, err
 	}
 	return response.RideTypes, rsp.Header, nil
@@ -148,7 +148,7 @@ func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideT
 	var response struct {
 		C []CostEstimate `json:"cost_estimates"`
 	}
-	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+	if err := unmarshal(rsp.Body, &response); err != nil {
 		return nil, rsp.Header, err
 	}
 	return response.C, rsp.Header, nil
@@ -216,7 +216,7 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 	var response struct {
 		E []ETAEstimate `json:"eta_estimates"`
 	}
-	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+	if err := unmarshal(rsp.Body, &response); err != nil {
 		return nil, rsp.Header, err
 	}
 	return response.E, rsp.Header, nil
@@ -260,7 +260,7 @@ func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, http.Header, e
 	var response struct {
 		N []NearbyDriver `json:"nearby_drivers"`
 	}
-	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
+	if err := unmarshal(rsp.Body, &response); err != nil {
 		return nil, rsp.Header, err
 	}
 	return response.N, rsp.Header, nil

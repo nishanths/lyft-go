@@ -1,6 +1,6 @@
 // Package twoleg provides functions for working with the two-legged
 // OAuth flow described at https://developer.lyft.com/v1/docs/authentication#section-client-credentials-2-legged-flow-for-public-endpoints.
-package twoleg // import "go.avalanche.space/lyft/auth/twoleg"
+package twoleg // import "go.avalanche.space/lyft-go/auth/twoleg"
 
 import (
 	"encoding/json"
@@ -51,7 +51,7 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Toke
 	}
 
 	var g token
-	if err := json.NewDecoder(rsp.Body).Decode(&g); err != nil {
+	if err := unmarshal(rsp.Body, &g); err != nil {
 		return Token{}, rsp.Header, err
 	}
 	return Token{
@@ -65,4 +65,12 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Toke
 func drainAndClose(r io.ReadCloser) {
 	io.Copy(ioutil.Discard, r)
 	r.Close()
+}
+
+func unmarshal(r io.Reader, v interface{}) error {
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(b, v)
 }

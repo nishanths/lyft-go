@@ -21,6 +21,15 @@ const (
 	RideTypeLuxSUV  = "lyft_luxsuv"
 )
 
+// RideTypeDisplay returns a nice display string for the supplied ride type.
+func RideTypeDisplay(r string) string {
+	// TODO: This feels hacky. Maybe it should be a hardcoded switch-case,
+	// or it shouldn't exist in the package at all.
+	r = strings.Replace(r, "_", " ", -1)
+	r = strings.Title(r)
+	return r
+}
+
 type CostTokenInfo struct {
 	PrimetimePercentage string
 	PrimetimeMultiplier float64
@@ -32,8 +41,7 @@ type CostTokenInfo struct {
 
 func newCostTokenInfo(body io.Reader) (CostTokenInfo, error) {
 	var c CostTokenInfo
-	err := json.NewDecoder(body).Decode(&c)
-	return c, err
+	return c, unmarshal(body, &c)
 }
 
 func (c *CostTokenInfo) UnmarshalJSON(p []byte) error {
@@ -150,7 +158,7 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 	switch rsp.StatusCode {
 	case 201:
 		var cr CreatedRide
-		if err := json.NewDecoder(rsp.Body).Decode(&cr); err != nil {
+		if err := unmarshal(rsp.Body, &cr); err != nil {
 			return CreatedRide{}, rsp.Header, err
 		}
 		return cr, rsp.Header, nil
@@ -183,7 +191,7 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	switch rsp.StatusCode {
 	case 200:
 		var ret Location
-		if err := json.NewDecoder(rsp.Body).Decode(&ret); err != nil {
+		if err := unmarshal(rsp.Body, &ret); err != nil {
 			return Location{}, rsp.Header, err
 		}
 		return ret, rsp.Header, nil
@@ -254,7 +262,7 @@ func (c *Client) RideReceipt(rideID string) (RideReceipt, http.Header, error) {
 	}
 
 	var rec RideReceipt
-	if err := json.NewDecoder(rsp.Body).Decode(&rec); err != nil {
+	if err := unmarshal(rsp.Body, &rec); err != nil {
 		return RideReceipt{}, rsp.Header, err
 	}
 	return rec, rsp.Header, nil
@@ -287,7 +295,7 @@ func newCancelRideError(rsp *http.Response) *CancelRideError {
 	ret.ErrorInfo = newErrorInfo(&eiBuf, rsp.Header)
 
 	var a aux
-	err := json.NewDecoder(otherBuf).Decode(&a)
+	err := unmarshal(otherBuf, &a)
 	if err == nil {
 		ret.Amount = a.Amount
 		ret.Currency = a.Currency
@@ -361,11 +369,10 @@ func (c *Client) RideDetail(rideID string) (RideDetail, http.Header, error) {
 	}
 
 	var det RideDetail
-	if err := json.NewDecoder(rsp.Body).Decode(&det); err != nil {
+	if err := unmarshal(rsp.Body, &det); err != nil {
 		return RideDetail{}, rsp.Header, err
 	}
 	return det, rsp.Header, nil
 }
 
-// TODO: Implement this.
-// func (c *Client) RateRide()
+// TODO: Implement this: func (c *Client) RateRide()
