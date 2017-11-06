@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nishanths/lyft"
+	"go.avalanche.space/lyft"
 )
 
 // Token is returned by GenerateToken.

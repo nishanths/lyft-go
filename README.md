@@ -1,10 +1,14 @@
 ## lyft
 
-Go client for v1 of lyft.com's HTTP API. 
+Go client for v1 of lyft.com's HTTP API. It supports authentication,
+Lyft's debug headers, and all endpoints except the sandbox routes.
 
-No API guarantees yet, so please vendor.
+No API guarantees yet, so please vendor. Particularly don't depend on
+the JSON encoding/decoding of types.
 
-`go get go.avalanche.space/lyft/...`
+```
+go get go.avalanche.space/lyft/...
+```
 
 ### Docs
 

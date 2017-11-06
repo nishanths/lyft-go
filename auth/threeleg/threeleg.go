@@ -10,10 +10,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nishanths/lyft"
+	"go.avalanche.space/lyft"
 )
 
-// AuthorizationURL is the URL that a user should be directed to, in order for the user
+// AuthorizationURL constructs the URL that a user should be directed to, in order for the user
 // to grant the list of permissions your application is requesting.
 func AuthorizationURL(clientID string, scopes []string, state string) string {
 	v := make(url.Values)
@@ -136,6 +136,8 @@ func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken 
 // RevokeToken revokes the supplied access token.
 // baseURL is typically lyft.BaseURL.
 func RevokeToken(c *http.Client, baseURL, clientID, clientSecret, accessToken string) (http.Header, error) {
+	// NOTE: There is some disagreement on the naming of the params in the API
+	// reference regrading refresh token vs. access token.
 	body := fmt.Sprintf(`{"token": "%s"}`, accessToken)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/revoke_refresh_token", strings.NewReader(body))
 	if err != nil {

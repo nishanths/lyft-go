@@ -229,10 +229,10 @@ type NearbyDriver struct {
 }
 
 type Driver struct {
-	Locations []DriverLocation `json:"locations"` // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
+	Locations []LatLng `json:"locations"` // Most recent coordinates (TODO: but in which order? WTF, Lyft API docs)
 }
 
-type DriverLocation struct {
+type LatLng struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
 }

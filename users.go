@@ -37,7 +37,7 @@ type rideHistory struct {
 	Destination         rideLocation      `json:"destination"`
 	Dropoff             rideLocation      `json:"dropoff"`
 	Location            VehicleLocation   `json:"location"`
-	Passenger           Person            `json:"passenger"`
+	Passenger           Person            `json:"passenger"` // The Phone field will not be set
 	Driver              Person            `json:"driver"`
 	Vehicle             Vehicle           `json:"vehicle"`
 	PrimetimePercentage string            `json:"primetime_percentage"`
@@ -110,7 +110,7 @@ type rideLocation struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
 	Address   string  `json:"address"`
-	ETA       float64 `json:"eta_seconds"` // Documented differently for origin v. destination v. dropoff, so float64 is safest
+	ETA       float64 `json:"eta_seconds"` // Documented differently for origin vs. destination vs. dropoff, so float64 is safest
 	Time      string  `json:"time"`
 }
 
@@ -146,10 +146,10 @@ type RideHistory struct {
 	RideID              string
 	RideStatus          string
 	RideType            string
-	Origin              RideLocation
-	Pickup              RideLocation
-	Destination         RideLocation
-	Dropoff             RideLocation
+	Origin              RideLocation // The Time field will not be set
+	Pickup              RideLocation // The ETA field will not be set
+	Destination         RideLocation // The Time field will not be set
+	Dropoff             RideLocation // The ETA field will not be set
 	Location            VehicleLocation
 	Passenger           Person
 	Driver              Person
@@ -175,14 +175,14 @@ type RideLocation struct {
 	Latitude  float64
 	Longitude float64
 	Address   string
-	ETA       time.Duration // Only set for RideHistory.Origin, .Destination
-	Time      time.Time     // Only set for RideHistory.Pickup, .Dropoff
+	ETA       time.Duration
+	Time      time.Time
 }
 
 type VehicleLocation struct {
 	Latitude  float64 `json:"lat"`
 	Longitude float64 `json:"lng"`
-	Bearing   float64 `json:"bearing"` // Bearing of the driver’s car in degrees.
+	Bearing   float64 `json:"bearing"` // Bearing of the car in degrees.
 }
 
 type Person struct {
@@ -191,7 +191,7 @@ type Person struct {
 	LastName  string `json:"last_name"`
 	ImageURL  string `json:"image_url"`
 	Rating    string `json:"rating"`
-	Phone     string `json:"phone_number"` // Only set for RideHistory.Driver
+	Phone     string `json:"phone_number"`
 }
 
 type Vehicle struct {
