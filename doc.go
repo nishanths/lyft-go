@@ -52,6 +52,5 @@
 //
 // Missing Features
 //
-// The package does not yet support the sandbox routes; the ride details route;
-// and the ride rating and tipping route.
+// The package does not yet support the sandbox routes and the ride rating route.
 package lyft

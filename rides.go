@@ -342,6 +342,28 @@ func (c *Client) CancelRide(rideID, cancelToken string) (http.Header, error) {
 	}
 }
 
-// TODO: Implement these.
-// func (c *Client) RideDetails()
+func (c *Client) RideDetail(rideID string) (RideDetail, http.Header, error) {
+	r, err := http.NewRequest("GET", fmt.Sprintf("%s/rides/%s", c.base(), rideID), nil)
+	if err != nil {
+		return RideDetail{}, nil, err
+	}
+
+	rsp, err := c.do(r)
+	if err != nil {
+		return RideDetail{}, nil, err
+	}
+	defer drainAndClose(rsp.Body)
+
+	if rsp.StatusCode != 200 {
+		return RideDetail{}, rsp.Header, NewStatusError(rsp)
+	}
+
+	var det RideDetail
+	if err := json.NewDecoder(rsp.Body).Decode(&det); err != nil {
+		return RideDetail{}, rsp.Header, err
+	}
+	return det, rsp.Header, nil
+}
+
+// TODO: Implement this.
 // func (c *Client) RateRide()
