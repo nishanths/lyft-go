@@ -1,6 +1,6 @@
-// Package lyft provides a client for Lyft's v1 HTTP API. It supports authentication,
-// webhooks, Lyft's debug headers, and most endpoints. Lyft's API reference is available
-// at https://developer.lyft.com/v1/docs/overview.
+// Package lyft provides a client for Lyft's v1 HTTP API. Along with its subpacakges, it
+// supports authentication, webhooks, Lyft's debug headers, and most endpoints. Lyft's
+// API reference is available at https://developer.lyft.com/v1/docs/overview.
 //
 // Errors
 //
@@ -52,5 +52,5 @@
 //
 // Missing Features
 //
-// The package does not yet support the sandbox routes and the ride rating route.
+// The package does not yet support the sandbox-specific routes and the ride rating route.
 package lyft
