@@ -26,7 +26,7 @@ const (
 )
 
 // Auxiliary type for unmarshaling.
-type rideHistory struct {
+type rideDetail struct {
 	RideID              string            `json:"ride_id"`
 	RideStatus          string            `json:"status"`
 	RideType            string            `json:"ride_type"`
@@ -55,52 +55,52 @@ type rideHistory struct {
 	Feedback            string            `json:"feedback"`
 }
 
-func (h rideHistory) convert(res *RideHistory) error {
+func (r rideDetail) convert(res *RideDetail) error {
 	var err error
-	res.RideID = h.RideID
-	res.RideStatus = h.RideStatus
-	res.RideType = h.RideType
-	err = h.Origin.convert(&res.Origin)
+	res.RideID = r.RideID
+	res.RideStatus = r.RideStatus
+	res.RideType = r.RideType
+	err = r.Origin.convert(&res.Origin)
 	if err != nil {
 		return err
 	}
-	err = h.Pickup.convert(&res.Pickup)
+	err = r.Pickup.convert(&res.Pickup)
 	if err != nil {
 		return err
 	}
-	err = h.Destination.convert(&res.Destination)
+	err = r.Destination.convert(&res.Destination)
 	if err != nil {
 		return err
 	}
-	err = h.Dropoff.convert(&res.Dropoff)
+	err = r.Dropoff.convert(&res.Dropoff)
 	if err != nil {
 		return err
 	}
-	res.Location = h.Location
-	res.Passenger = h.Passenger
-	res.Driver = h.Driver
-	res.Vehicle = h.Vehicle
-	res.PrimetimePercentage = h.PrimetimePercentage
-	res.Distance = h.Distance
-	res.Duration = time.Second * time.Duration(h.Duration)
-	res.Price = h.Price
-	res.LineItems = h.LineItems
-	res.Requested, err = time.Parse(TimeLayout, h.Requested)
+	res.Location = r.Location
+	res.Passenger = r.Passenger
+	res.Driver = r.Driver
+	res.Vehicle = r.Vehicle
+	res.PrimetimePercentage = r.PrimetimePercentage
+	res.Distance = r.Distance
+	res.Duration = time.Second * time.Duration(r.Duration)
+	res.Price = r.Price
+	res.LineItems = r.LineItems
+	res.Requested, err = time.Parse(TimeLayout, r.Requested)
 	if err != nil {
 		return err
 	}
-	res.RideProfile = h.RideProfile
-	res.BeaconColor = h.BeaconColor
-	res.PricingDetailsURL = h.PricingDetailsURL
-	res.RouteURL = h.RouteURL
-	res.CanCancel = h.CanCancel
-	res.CanceledBy = h.CanceledBy
-	err = h.CancellationPrice.convert(&res.CancellationPrice)
+	res.RideProfile = r.RideProfile
+	res.BeaconColor = r.BeaconColor
+	res.PricingDetailsURL = r.PricingDetailsURL
+	res.RouteURL = r.RouteURL
+	res.CanCancel = r.CanCancel
+	res.CanceledBy = r.CanceledBy
+	err = r.CancellationPrice.convert(&res.CancellationPrice)
 	if err != nil {
 		return err
 	}
-	res.Rating = h.Rating
-	res.Feedback = h.Feedback
+	res.Rating = r.Rating
+	res.Feedback = r.Feedback
 	return nil
 }
 
@@ -137,10 +137,10 @@ func (c cancellationPrice) convert(res *CancellationPrice) error {
 	return nil
 }
 
-// RideHistory is returned by the client's RideHistory method.
+// RideDetail is returned by the client's RideDetail method.
 // Some fields are available only if certain conditions are true
 // at the time of making the request. See the API reference for details.
-type RideHistory struct {
+type RideDetail struct {
 	RideID              string
 	RideStatus          string
 	RideType            string
@@ -221,23 +221,23 @@ type CancellationPrice struct {
 	TokenDuration time.Duration
 }
 
-func (h *RideHistory) UnmarshalJSON(p []byte) error {
-	var aux rideHistory
+func (r *RideDetail) UnmarshalJSON(p []byte) error {
+	var aux rideDetail
 	if err := json.Unmarshal(p, &aux); err != nil {
 		return err
 	}
-	return aux.convert(h)
+	return aux.convert(r)
 }
 
-// RideHistory returns the authenticated user's current and past rides.
+// RideDetail returns the authenticated user's current and past rides.
 // See the Lyft API reference for details on how far back the
 // start and end times can go. If end is the zero time it is ignored.
 // Limit specifies the maximum number of rides to return. If limit is -1,
-// RideHistory requests the maximum limit documented in the API reference (50).
+// RideDetail requests the maximum limit documented in the API reference (50).
 //
 // Implementation detail: The times, in UTC, are formatted using "2006-01-02T15:04:05Z".
 // For example: start.UTC().Format("2006-01-02T15:04:05Z").
-func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, http.Header, error) {
+func (c *Client) RideDetail(start, end time.Time, limit int32) ([]RideDetail, http.Header, error) {
 	const layout = "2006-01-02T15:04:05Z"
 
 	vals := make(url.Values)
@@ -265,7 +265,7 @@ func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, 
 	}
 
 	var response struct {
-		R []RideHistory `json:"ride_history"`
+		R []RideDetail `json:"ride_history"`
 	}
 	if err := json.NewDecoder(rsp.Body).Decode(&response); err != nil {
 		return nil, rsp.Header, err
