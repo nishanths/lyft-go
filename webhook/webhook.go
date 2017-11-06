@@ -30,7 +30,9 @@ type Event struct {
 	URL       string
 	Occurred  time.Time
 	EventType string
-	Detail    lyft.RideDetail // Some fields may not be set
+	// Some fields may not be set.
+	// See details for each event type: https://developer.lyft.com/v1/docs/webhooks
+	Detail lyft.RideDetail
 }
 
 func (e *Event) IsSandbox() bool {
@@ -64,7 +66,7 @@ func (e *Event) UnmarshalJSON(p []byte) error {
 }
 
 // Signature returns the value of "X-Lyft-Signature" in the header.
-// The "sha256=" will have been trimmed.
+// The "sha256=" prefix will have been trimmed.
 func Signature(h http.Header) string {
 	return strings.TrimPrefix(h.Get("X-Lyft-Signature"), "sha256=")
 }
