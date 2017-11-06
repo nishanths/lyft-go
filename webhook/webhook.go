@@ -7,8 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
-	"io"
-	"io/ioutil"
+	"net/http"
 	"strings"
 	"time"
 
@@ -17,18 +16,21 @@ import (
 
 // Event types.
 const (
-	EventRideStatusUpdated = "ride.status.updated"
-	EventReceiptReady      = "ride.receipt.ready"
+	RideStatusUpdated = "ride.status.updated"
+	RideReceiptReady  = "ride.receipt.ready"
 )
 
 const SandboxEventPrefix = "sandboxevent"
 
+// Event represents an event from a Lyft webhook.
+// It implements json.Unmarshaler in a manner suitable for decoding
+// incoming webhook request bodies.
 type Event struct {
 	EventID   string
 	URL       string
 	Occurred  time.Time
 	EventType string
-	Detail    lyft.RideDetail
+	Detail    lyft.RideDetail // Some fields may not be set
 }
 
 func (e *Event) IsSandbox() bool {
@@ -61,14 +63,15 @@ func (e *Event) UnmarshalJSON(p []byte) error {
 	return nil
 }
 
-func VerifySignature(body, signature, verificationToken []byte) bool {
-	mac := hmac.New(sha256.New, verificationToken)
-	mac.Write(body)
-	bodySignature := mac.Sum(nil)
-	return hmac.Equal([]byte(base64.StdEncoding.EncodeToString(bodySignature)), signature)
+// Signature returns the value of "X-Lyft-Signature" in the header.
+// The "sha256=" will have been trimmed.
+func Signature(h http.Header) string {
+	return strings.TrimPrefix(h.Get("X-Lyft-Signature"), "sha256=")
 }
 
-func drainAndClose(r io.ReadCloser) {
-	io.Copy(ioutil.Discard, r)
-	r.Close()
+func VerifySignature(responseBody, signature, verificationToken []byte) bool {
+	mac := hmac.New(sha256.New, verificationToken)
+	mac.Write(responseBody)
+	bodySignature := mac.Sum(nil)
+	return hmac.Equal([]byte(base64.StdEncoding.EncodeToString(bodySignature)), signature)
 }
