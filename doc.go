@@ -1,5 +1,5 @@
 // Package lyft provides a client for Lyft's v1 HTTP API. It supports authentication,
-// Lyft's debug headers, webhooks, and most endpoints. Lyft's API reference is available
+// Lyft's debug headers, and most endpoints. Lyft's API reference is available
 // at https://developer.lyft.com/v1/docs/overview.
 //
 // Errors
