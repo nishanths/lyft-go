@@ -1,1 +1,1 @@
-- Drain json.Decode fully
+- Drain json.Decode fully; do something like draining decoder.Buffered() fully.

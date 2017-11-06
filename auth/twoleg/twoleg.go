@@ -4,6 +4,8 @@ package twoleg // import "go.avalanche.space/lyft/auth/twoleg"
 
 import (
 	"encoding/json"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 	"time"
@@ -42,7 +44,7 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Toke
 	if err != nil {
 		return Token{}, nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
 		return Token{}, rsp.Header, lyft.NewStatusError(rsp)
@@ -58,4 +60,9 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Toke
 		Expires:     time.Second * time.Duration(g.Expires),
 		Scopes:      strings.Fields(g.Scopes),
 	}, rsp.Header, nil
+}
+
+func drainAndClose(r io.ReadCloser) {
+	io.Copy(ioutil.Discard, r)
+	r.Close()
 }

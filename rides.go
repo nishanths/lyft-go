@@ -145,7 +145,7 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 	if err != nil {
 		return CreatedRide{}, nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	switch rsp.StatusCode {
 	case 201:
@@ -178,7 +178,7 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	if err != nil {
 		return Location{}, nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	switch rsp.StatusCode {
 	case 200:
@@ -245,7 +245,7 @@ func (c *Client) RideReceipt(rideID string) (Receipt, http.Header, error) {
 	if err != nil {
 		return Receipt{}, nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
 		return Receipt{}, rsp.Header, NewStatusError(rsp)
@@ -327,7 +327,7 @@ func (c *Client) CancelRide(rideID, cancelToken string) (http.Header, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	switch rsp.StatusCode {
 	case 204:

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -143,6 +144,10 @@ type StatusError struct {
 // solely so that subpackages (such as package auth) can create a
 // StatusError using the canonical way. Not meant for external use.
 // Does not close rsp.Body.
+//
+// NewStatusError should assume that rsp.Body may be drained subsequently,
+// so it must copy rsp.Body if necessary. It is allowed to drain the
+// incoming rsp.Body.
 func NewStatusError(rsp *http.Response) *StatusError {
 	var buf bytes.Buffer // for the StatusError's ResponseBody field
 	buf.ReadFrom(rsp.Body)
@@ -213,4 +218,9 @@ func intHeaderValue(h http.Header, k string) (int, bool) {
 		return 0, false
 	}
 	return i, true
+}
+
+func drainAndClose(r io.ReadCloser) {
+	io.Copy(ioutil.Discard, r)
+	r.Close()
 }

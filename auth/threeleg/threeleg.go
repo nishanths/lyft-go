@@ -5,6 +5,8 @@ package threeleg // import "go.avalanche.space/lyft/auth/threeleg"
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strings"
@@ -80,7 +82,7 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string)
 	if err != nil {
 		return Token{}, nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
 		return Token{}, rsp.Header, lyft.NewStatusError(rsp)
@@ -115,7 +117,7 @@ func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken 
 	if err != nil {
 		return RefToken{}, nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
 		return RefToken{}, rsp.Header, lyft.NewStatusError(rsp)
@@ -150,10 +152,15 @@ func RevokeToken(c *http.Client, baseURL, clientID, clientSecret, accessToken st
 	if err != nil {
 		return nil, err
 	}
-	defer rsp.Body.Close()
+	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
 		return rsp.Header, lyft.NewStatusError(rsp)
 	}
 	return rsp.Header, nil
+}
+
+func drainAndClose(r io.ReadCloser) {
+	io.Copy(ioutil.Discard, r)
+	r.Close()
 }
