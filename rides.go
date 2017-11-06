@@ -7,6 +7,7 @@ import (
 	"io"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -92,6 +93,8 @@ func (c *RideRequestError) Error() string {
 		return fmt.Sprintf("%s: %s", c.Reason, c.Description)
 	} else if c.Reason != "" {
 		return c.Reason
+	} else if c.Description != "" {
+		return c.Description
 	}
 	return "<ride request error>"
 }
@@ -158,8 +161,6 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 	}
 }
 
-// func (c *Client) CancelRide()
-
 // SetDestination updates the ride's destination to the supplied location.
 // The location's Address field is optional.
 func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Header, error) {
@@ -191,6 +192,7 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	}
 }
 
+// Receipt is returned by the client's RideReceipt method.
 type Receipt struct {
 	RideID      string
 	Price       Price
@@ -232,6 +234,7 @@ type Charge struct {
 	PaymentMethod string `json:"payment_method"`
 }
 
+// RideReceipt retrieves the receipt for the specified ride.
 func (c *Client) RideReceipt(rideID string) (Receipt, http.Header, error) {
 	r, err := http.NewRequest("GET", fmt.Sprintf("%s/rides/%s/receipt", c.base(), rideID), nil)
 	if err != nil {
@@ -253,6 +256,87 @@ func (c *Client) RideReceipt(rideID string) (Receipt, http.Header, error) {
 		return Receipt{}, rsp.Header, err
 	}
 	return rec, rsp.Header, nil
+}
+
+var _ error = (*CancelRideError)(nil)
+
+type CancelRideError struct {
+	ErrorInfo
+	Amount        float64
+	Currency      string
+	Token         string
+	TokenDuration time.Duration
+}
+
+func newCancelRideError(rsp *http.Response) *CancelRideError {
+	ret := &CancelRideError{}
+
+	type aux struct {
+		Amount        float64 `json:"amount"`
+		Currency      string  `json:"currency"`
+		Token         string  `json:"token"`
+		TokenDuration int64   `json:"token_duration"` // seconds
+	}
+
+	var eiBuf bytes.Buffer
+	eiBuf.ReadFrom(rsp.Body)
+	otherBuf := bytes.NewBuffer(eiBuf.Bytes())
+
+	ret.ErrorInfo = newErrorInfo(&eiBuf, rsp.Header)
+
+	var a aux
+	err := json.NewDecoder(otherBuf).Decode(&a)
+	if err == nil {
+		ret.Amount = a.Amount
+		ret.Currency = a.Currency
+		ret.Token = a.Token
+		ret.TokenDuration = time.Second * time.Duration(a.TokenDuration)
+	}
+
+	return ret
+}
+
+func (c *CancelRideError) Error() string {
+	if c.Reason != "" && c.Description != "" {
+		return fmt.Sprintf("%s: %s", c.Reason, c.Description)
+	} else if c.Reason != "" {
+		return c.Reason
+	} else if c.Description != "" {
+		return c.Description
+	}
+	return "<cancel ride error>"
+}
+
+// CancelRide cancels the specificed ride. cancelToken is the cancel confirmation
+// token; it is optional. See https://developer.lyft.com/reference#ride-request-cancel
+// for more details on the token.
+func (c *Client) CancelRide(rideID, cancelToken string) (http.Header, error) {
+	var body io.Reader
+	if cancelToken != "" {
+		body = strings.NewReader(fmt.Sprintf(`{"cancel_confirmation_token": "%s"}`, cancelToken))
+	}
+	r, err := http.NewRequest("POST", fmt.Sprintf("%s/rides/%s/cancel", c.base(), rideID), body)
+	if err != nil {
+		return nil, err
+	}
+	if cancelToken != "" {
+		r.Header.Set("Content-Type", "application/json")
+	}
+
+	rsp, err := c.do(r)
+	if err != nil {
+		return nil, err
+	}
+	defer rsp.Body.Close()
+
+	switch rsp.StatusCode {
+	case 204:
+		return rsp.Header, nil
+	case 400:
+		return rsp.Header, newCancelRideError(rsp)
+	default:
+		return rsp.Header, NewStatusError(rsp)
+	}
 }
 
 // TODO: Implement these.
