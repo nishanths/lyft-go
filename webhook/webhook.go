@@ -6,6 +6,7 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"strings"
@@ -27,11 +28,37 @@ type Event struct {
 	URL       string
 	Occurred  time.Time
 	EventType string
-	Event     lyft.RideDetail
+	Detail    lyft.RideDetail
 }
 
-func (e Event) IsSandbox() bool {
+func (e *Event) IsSandbox() bool {
 	return strings.HasPrefix(e.EventID, SandboxEventPrefix)
+}
+
+func (e *Event) UnmarshalJSON(p []byte) error {
+	type event struct {
+		EventID   string          `json:"event_id"`
+		URL       string          `json:"href"`
+		Occurred  string          `json:"occurred_at"`
+		EventType string          `json:"event_type"`
+		Detail    lyft.RideDetail `json:"event"`
+	}
+	var aux event
+	if err := json.Unmarshal(p, &aux); err != nil {
+		return err
+	}
+	e.EventID = aux.EventID
+	e.URL = aux.URL
+	if aux.Occurred != "" {
+		o, err := time.Parse(lyft.TimeLayout, aux.Occurred)
+		if err != nil {
+			return err
+		}
+		e.Occurred = o
+	}
+	e.EventID = aux.EventType
+	e.Detail = aux.Detail
+	return nil
 }
 
 func VerifySignature(body, signature, verificationToken []byte) bool {
