@@ -135,7 +135,7 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 	if err := json.NewEncoder(&buf).Encode(req); err != nil {
 		return CreatedRide{}, nil, err
 	}
-	r, err := http.NewRequest("POST", c.base()+"/rides", &buf)
+	r, err := http.NewRequest("POST", c.base()+"/v1/rides", &buf)
 	if err != nil {
 		return CreatedRide{}, nil, err
 	}
@@ -168,7 +168,7 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	if err := json.NewEncoder(&buf).Encode(loc); err != nil {
 		return Location{}, nil, err
 	}
-	r, err := http.NewRequest("PUT", fmt.Sprintf("%s/rides/%s/destination", c.base(), rideID), &buf)
+	r, err := http.NewRequest("PUT", fmt.Sprintf("%s/v1/rides/%s/destination", c.base(), rideID), &buf)
 	if err != nil {
 		return Location{}, nil, err
 	}
@@ -238,7 +238,7 @@ type Charge struct {
 
 // RideReceipt retrieves the receipt for the specified ride.
 func (c *Client) RideReceipt(rideID string) (RideReceipt, http.Header, error) {
-	r, err := http.NewRequest("GET", fmt.Sprintf("%s/rides/%s/receipt", c.base(), rideID), nil)
+	r, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/rides/%s/receipt", c.base(), rideID), nil)
 	if err != nil {
 		return RideReceipt{}, nil, err
 	}
@@ -320,7 +320,7 @@ func (c *Client) CancelRide(rideID, cancelToken string) (http.Header, error) {
 	if cancelToken != "" {
 		body = strings.NewReader(fmt.Sprintf(`{"cancel_confirmation_token": "%s"}`, cancelToken))
 	}
-	r, err := http.NewRequest("POST", fmt.Sprintf("%s/rides/%s/cancel", c.base(), rideID), body)
+	r, err := http.NewRequest("POST", fmt.Sprintf("%s/v1/rides/%s/cancel", c.base(), rideID), body)
 	if err != nil {
 		return nil, err
 	}
@@ -345,7 +345,7 @@ func (c *Client) CancelRide(rideID, cancelToken string) (http.Header, error) {
 }
 
 func (c *Client) RideDetail(rideID string) (RideDetail, http.Header, error) {
-	r, err := http.NewRequest("GET", fmt.Sprintf("%s/rides/%s", c.base(), rideID), nil)
+	r, err := http.NewRequest("GET", fmt.Sprintf("%s/v1/rides/%s", c.base(), rideID), nil)
 	if err != nil {
 		return RideDetail{}, nil, err
 	}

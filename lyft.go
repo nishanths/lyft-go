@@ -13,8 +13,8 @@ import (
 	"time"
 )
 
-// BaseURL is the base URL for Lyft's v1 HTTP API.
-const BaseURL = "https://api.lyft.com/v1"
+// BaseURL is the base URL for Lyft's HTTP API.
+const BaseURL = "https://api.lyft.com"
 
 const TimeLayout = time.RFC3339
 
