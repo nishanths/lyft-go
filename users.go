@@ -25,8 +25,6 @@ const (
 	ProfilePersonal = "personal"
 )
 
-const datetimeLayout = "2006-01-02T15:04:05-07:00" // used in unmarshaling; seems to be ISO 8601
-
 // Auxiliary type for unmarshaling.
 type rideHistory struct {
 	RideID              string            `json:"ride_id"`
@@ -87,7 +85,7 @@ func (h rideHistory) convert(res *RideHistory) error {
 	res.Duration = time.Second * time.Duration(h.Duration)
 	res.Price = h.Price
 	res.LineItems = h.LineItems
-	res.Requested, err = time.Parse(datetimeLayout, h.Requested)
+	res.Requested, err = time.Parse(TimeLayout, h.Requested)
 	if err != nil {
 		return err
 	}
@@ -120,7 +118,7 @@ func (l rideLocation) convert(res *RideLocation) error {
 	res.Longitude = l.Longitude
 	res.Address = l.Address
 	res.ETA = time.Second * time.Duration(l.ETA) // TODO: consider not truncating
-	res.Time, err = time.Parse(datetimeLayout, l.Time)
+	res.Time, err = time.Parse(TimeLayout, l.Time)
 	return err
 }
 

@@ -219,7 +219,7 @@ func (r *RideReceipt) UnmarshalJSON(p []byte) error {
 	r.Price = aux.Price
 	r.LineItems = aux.LineItems
 	r.Charges = aux.Charges
-	requested, err := time.Parse(datetimeLayout, aux.Requested)
+	requested, err := time.Parse(TimeLayout, aux.Requested)
 	if err != nil {
 		return err
 	}

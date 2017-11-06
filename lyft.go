@@ -10,10 +10,13 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"strconv"
+	"time"
 )
 
 // BaseURL is the base URL for Lyft's v1 HTTP API.
 const BaseURL = "https://api.lyft.com/v1"
+
+const TimeLayout = time.RFC3339
 
 // Client is a client for the Lyft API.
 // AccessToken must be set for a client to be ready to use. The rest of the
