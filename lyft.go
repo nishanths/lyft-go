@@ -140,15 +140,19 @@ type StatusError struct {
 	ErrorInfo    // Fields may be empty
 }
 
-// NewStatusError constructs a StatusError from the response. It exists
-// solely so that subpackages (such as package auth) can create a
-// StatusError using the canonical way. Not meant for external use.
+// NewStatusError is not meant for external use. It exists solely so that subpackages
+// (such as package auth) can create a StatusError in a canonical way.
+func NewStatusError(rsp *http.Response) *StatusError {
+	return newStatusError(rsp)
+}
+
+// newStatusError constructs a StatusError from the response.
 // Does not close rsp.Body.
 //
-// NewStatusError should assume that rsp.Body may be drained subsequently,
+// newStatusError should assume that rsp.Body may be drained subsequently,
 // so it must copy rsp.Body if necessary. It is allowed to drain the
 // incoming rsp.Body.
-func NewStatusError(rsp *http.Response) *StatusError {
+func newStatusError(rsp *http.Response) *StatusError {
 	var buf bytes.Buffer // for the StatusError's ResponseBody field
 	buf.ReadFrom(rsp.Body)
 	buf2 := bytes.NewBuffer(buf.Bytes()) // another buffer for newErrorInfo to use.
