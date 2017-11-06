@@ -3,7 +3,11 @@ package lyft
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 // Ride types. May not be an exhaustive list.
@@ -15,6 +19,82 @@ const (
 	RideTypeLux     = "lyft_lux"
 	RideTypeLuxSUV  = "lyft_luxsuv"
 )
+
+type CostTokenInfo struct {
+	PrimetimePercentage string
+	PrimetimeMultiplier float64
+	PrimetimeToken      string
+	CostToken           string
+	TokenDuration       time.Duration
+	ErrorURI            string
+}
+
+func newCostTokenInfo(body io.Reader) (CostTokenInfo, error) {
+	var c CostTokenInfo
+	err := json.NewDecoder(body).Decode(&c)
+	return c, err
+}
+
+func (c *CostTokenInfo) UnmarshalJSON(p []byte) error {
+	type costTokenInfo struct {
+		PrimetimePercentage string  `json:"primetime_percentage"`
+		PrimetimeMultiplier float64 `json:"primetime_multiplier"`
+		PrimetimeToken      string  `json:"primetime_confirmation_token"`
+		CostToken           string  `json:"cost_token"`
+		// Is this seriously a string? Even Swagger says so.
+		// http://petstore.swagger.io/?url=https://api.lyft.com/v1/spec
+		TokenDuration string `json:"token_duration"` // in seconds
+		ErrorURI      string `json:"error_uri"`
+	}
+	var aux costTokenInfo
+	if err := json.Unmarshal(p, &aux); err != nil {
+		return err
+	}
+	c.PrimetimePercentage = aux.PrimetimePercentage
+	c.PrimetimeMultiplier = aux.PrimetimeMultiplier
+	c.PrimetimeToken = aux.PrimetimeToken
+	c.CostToken = aux.CostToken
+	i, err := strconv.ParseInt(aux.TokenDuration, 10, 64)
+	if err != nil {
+		return err
+	}
+	c.TokenDuration = time.Second * time.Duration(i)
+	c.ErrorURI = aux.ErrorURI
+	return nil
+}
+
+var _ error = (*RideRequestError)(nil)
+
+type RideRequestError struct {
+	ErrorInfo                // Fields may be empty
+	Cost      *CostTokenInfo // May be nil
+}
+
+func newRideRequestError(rsp *http.Response) *RideRequestError {
+	var eiBuf bytes.Buffer
+	eiBuf.ReadFrom(rsp.Body)
+	ciBuf := bytes.NewBuffer(eiBuf.Bytes())
+
+	ei := newErrorInfo(&eiBuf, rsp.Header)
+	ci, err := newCostTokenInfo(ciBuf)
+
+	ret := &RideRequestError{
+		ErrorInfo: ei,
+	}
+	if err == nil {
+		ret.Cost = &ci
+	}
+	return ret
+}
+
+func (c *RideRequestError) Error() string {
+	if c.Reason != "" && c.Description != "" {
+		return fmt.Sprintf("%s: %s", c.Reason, c.Description)
+	} else if c.Reason != "" {
+		return c.Reason
+	}
+	return "<ride request error>"
+}
 
 // RideRequest is the paramters for the client's RequestRide method.
 type RideRequest struct {
@@ -43,6 +123,10 @@ type Location struct {
 // RequestRide requests a ride for a user.
 // As of 2017-11-05, Lyft Line is not fully supported. See
 // https://developer.lyft.com/reference#ride-request for details.
+//
+// If further action (such as confirming the cost) is required before the
+// ride can be successfully created, the error will be of type *RideRequestError.
+// This corresponds to the 400 status code documented in Lyft's API reference.
 func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(req); err != nil {
@@ -68,8 +152,7 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 		}
 		return cr, rsp.Header, nil
 	case 400:
-		// TODO: This should use a typed error for 400 responses.
-		panic("unhandled case")
+		return CreatedRide{}, rsp.Header, newRideRequestError(rsp)
 	default:
 		return CreatedRide{}, rsp.Header, NewStatusError(rsp)
 	}

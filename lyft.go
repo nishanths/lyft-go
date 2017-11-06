@@ -56,6 +56,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -144,23 +145,50 @@ const (
 	UnsupportedGrantType = "unsupported_grant_type"
 )
 
+type ErrorInfo struct {
+	Reason      string
+	Details     []map[string]string
+	Description string
+}
+
+func newErrorInfo(body io.Reader, h http.Header) ErrorInfo {
+	var lyftErr lyftError
+	decodeErr := json.NewDecoder(body).Decode(&lyftErr)
+
+	// Determine the value for the Reason field; from the header
+	// otherwise from the body.
+	var e string
+	v := h["error"] // non-canonical
+	if len(v) != 0 {
+		e = v[0]
+	} else if decodeErr == nil {
+		e = lyftErr.Slug
+	}
+
+	// The Details and Description fields.
+	var det []map[string]string
+	var desc string
+	if decodeErr == nil {
+		det = lyftErr.Details
+		desc = lyftErr.Description
+	}
+
+	return ErrorInfo{
+		Reason:      e,
+		Details:     det,
+		Description: desc,
+	}
+}
+
+var _ error = (*StatusError)(nil)
+
 // StatusError is returned when the HTTP roundtrip succeeded, but there
 // was error was indicated via the HTTP status code, typically due to an
 // application-level error.
 type StatusError struct {
 	StatusCode   int
 	ResponseBody bytes.Buffer
-	// The following fields may be empty.
-	Reason      string
-	Details     []map[string]string
-	Description string
-}
-
-// See https://developer.lyft.com/v1/docs/errors.
-type errType struct {
-	Slug        string              `json:"error"`
-	Details     []map[string]string `json:"error_detail"`
-	Description string              `json:"error_description"`
+	ErrorInfo    // Fields may be empty
 }
 
 // NewStatusError constructs a StatusError from the response. It exists
@@ -168,29 +196,13 @@ type errType struct {
 // StatusError using the canonical way. Not meant for external use.
 // Does not close rsp.Body.
 func NewStatusError(rsp *http.Response) *StatusError {
-	var buf bytes.Buffer   // for the ResponseBody
-	buf.ReadFrom(rsp.Body) // ignore errors
-
-	decodeBuf := bytes.NewBuffer(buf.Bytes()) // to parse the response body
-	var errTyp errType
-	decodeErr := json.NewDecoder(decodeBuf).Decode(&errTyp)
-
-	// Determine the value for the Reason field; from the header
-	// otherwise from the body.
-	var e string
-	v := rsp.Header["error"]
-	if len(v) != 0 {
-		e = v[0]
-	} else if decodeErr == nil {
-		e = errTyp.Slug
-	}
-
+	var buf bytes.Buffer // for the StatusError's ResponseBody field
+	buf.ReadFrom(rsp.Body)
+	buf2 := bytes.NewBuffer(buf.Bytes()) // another buffer for newErrorInfo to use.
 	return &StatusError{
 		StatusCode:   rsp.StatusCode,
 		ResponseBody: buf,
-		Reason:       e,
-		Details:      errTyp.Details, // safe to access even if decodeErr != nil
-		Description:  errTyp.Description,
+		ErrorInfo:    newErrorInfo(buf2, rsp.Header),
 	}
 }
 
@@ -199,6 +211,13 @@ func (s *StatusError) Error() string {
 		return fmt.Sprintf("%s: status code: %d", s.Reason, s.StatusCode)
 	}
 	return fmt.Sprintf("status code: %d", s.StatusCode)
+}
+
+// See https://developer.lyft.com/v1/docs/errors.
+type lyftError struct {
+	Slug        string              `json:"error"`
+	Details     []map[string]string `json:"error_detail"`
+	Description string              `json:"error_description"`
 }
 
 // IsRateLimit returns whether the error arose because of running into a
