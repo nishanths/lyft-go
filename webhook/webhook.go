@@ -1,3 +1,5 @@
+// Package webhook provides types and utility functions for handling
+// Lyft webhooks.
 package webhook // import "go.avalanche.space/lyft/webhook"
 
 import (
@@ -8,6 +10,8 @@ import (
 	"io/ioutil"
 	"strings"
 	"time"
+
+	"go.avalanche.space/lyft"
 )
 
 // Event types.
@@ -23,7 +27,7 @@ type Event struct {
 	URL       string
 	Occurred  time.Time
 	EventType string
-	Event     interface{}
+	Event     lyft.RideDetail
 }
 
 func (e Event) IsSandbox() bool {
