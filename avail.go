@@ -24,7 +24,7 @@ type Pricing struct {
 	Minimum         int    `json:"cost_minimum"`
 	TrustAndService int    `json:"trust_and_service"`
 	Currency        string `json:"currency"`
-	CancelPenalty   int    `json:"cancel_penalty_amout"`
+	CancelPenalty   int    `json:"cancel_penalty_amount"`
 }
 
 func formatFloat(n float64) string {
