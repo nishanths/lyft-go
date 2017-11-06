@@ -26,6 +26,9 @@ const (
 )
 
 // Auxiliary type for unmarshaling.
+// NOTE: Time parsing will fail if the corresponding string is field empty.
+// So to be safe, we only parse times if the field is non-empty. Particularly
+// Pickup and Dropoff (which contain time.Time) are not present in webhook events.
 type rideDetail struct {
 	RideID              string            `json:"ride_id"`
 	RideStatus          string            `json:"status"`
@@ -85,9 +88,12 @@ func (r rideDetail) convert(res *RideDetail) error {
 	res.Duration = time.Second * time.Duration(r.Duration)
 	res.Price = r.Price
 	res.LineItems = r.LineItems
-	res.Requested, err = time.Parse(TimeLayout, r.Requested)
-	if err != nil {
-		return err
+	if r.Requested != "" {
+		requested, err := time.Parse(TimeLayout, r.Requested)
+		if err != nil {
+			return err
+		}
+		res.Requested = requested
 	}
 	res.RideProfile = r.RideProfile
 	res.BeaconColor = r.BeaconColor
@@ -113,13 +119,18 @@ type rideLocation struct {
 }
 
 func (l rideLocation) convert(res *RideLocation) error {
-	var err error
 	res.Latitude = l.Latitude
 	res.Longitude = l.Longitude
 	res.Address = l.Address
 	res.ETA = time.Second * time.Duration(l.ETA) // TODO: consider not truncating
-	res.Time, err = time.Parse(TimeLayout, l.Time)
-	return err
+	if l.Time != "" {
+		t, err := time.Parse(TimeLayout, l.Time)
+		if err != nil {
+			return err
+		}
+		res.Time = t
+	}
+	return nil
 }
 
 type cancellationPrice struct {
