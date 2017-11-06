@@ -137,9 +137,10 @@ func (c cancellationPrice) convert(res *CancellationPrice) error {
 	return nil
 }
 
-// RideDetail is returned by the client's RideDetail method.
+// RideDetail is returned by the client's RideDetail and RideHistory methods.
 // Some fields are available only if certain conditions are true
 // at the time of making the request. See the API reference for details.
+// The "generated_at" field is not supported.
 type RideDetail struct {
 	RideID              string
 	RideStatus          string
@@ -229,15 +230,15 @@ func (r *RideDetail) UnmarshalJSON(p []byte) error {
 	return aux.convert(r)
 }
 
-// RideDetail returns the authenticated user's current and past rides.
+// RideHistory returns the authenticated user's current and past rides.
 // See the Lyft API reference for details on how far back the
 // start and end times can go. If end is the zero time it is ignored.
 // Limit specifies the maximum number of rides to return. If limit is -1,
-// RideDetail requests the maximum limit documented in the API reference (50).
+// RideHistory requests the maximum limit documented in the API reference (50).
 //
 // Implementation detail: The times, in UTC, are formatted using "2006-01-02T15:04:05Z".
 // For example: start.UTC().Format("2006-01-02T15:04:05Z").
-func (c *Client) RideDetail(start, end time.Time, limit int32) ([]RideDetail, http.Header, error) {
+func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideDetail, http.Header, error) {
 	const layout = "2006-01-02T15:04:05Z"
 
 	vals := make(url.Values)
