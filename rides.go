@@ -159,7 +159,40 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 }
 
 // func (c *Client) CancelRide()
-// func (c *Client) RateRide()
-// func (c *Client) SetDestination()
+
+// SetDestination updates the ride's destination to the supplied location.
+// The location's Address field is optional.
+func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Header, error) {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(loc); err != nil {
+		return Location{}, nil, err
+	}
+	r, err := http.NewRequest("PUT", fmt.Sprintf("%s/v1/rides/%s/destination", c.base(), rideID), &buf)
+	if err != nil {
+		return Location{}, nil, err
+	}
+	r.Header.Set("Content-Type", "application/json")
+
+	rsp, err := c.do(r)
+	if err != nil {
+		return Location{}, nil, err
+	}
+	defer rsp.Body.Close()
+
+	switch rsp.StatusCode {
+	case 200:
+		var ret Location
+		if err := json.NewDecoder(rsp.Body).Decode(&ret); err != nil {
+			return Location{}, rsp.Header, err
+		}
+		return ret, rsp.Header, nil
+	default:
+		return Location{}, rsp.Header, NewStatusError(rsp)
+	}
+}
+
 // func (c *Client) RideReceipt()
+
+// TODO: Implement these.
 // func (c *Client) RideDetails()
+// func (c *Client) RateRide()

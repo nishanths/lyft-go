@@ -1,18 +1,6 @@
-// Package lyft provides a client for Lyft's v1 HTTP API.
-// Lyft's API reference is available at https://developer.lyft.com/v1/docs/overview.
-//
-// Response Header and Request-ID
-//
-// Methods on the client typically have a signature like:
-//
-//  func (c *Client) Foo (T, http.Header, error)
-//
-// The returned header is the the HTTP response header. It is safe to access
-// when the error is nil or the error is of type *StatusError.
-//
-// The returned header is useful for obtaining the rate limit header and unique
-// Request-ID header set by Lyft. For details, see
-// https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes.
+// Package lyft provides a client for Lyft's v1 HTTP API. It supports authentication,
+// Lyft's debug headers, webhooks, and most endpoints. Lyft's API reference is available
+// at https://developer.lyft.com/v1/docs/overview.
 //
 // Errors
 //
@@ -20,7 +8,21 @@
 // the error will be of type *StatusError, which can be inspected for more
 // details.
 //
-// Formats
+// Response Header and Request-ID
+//
+// Methods on the client typically have a signature like:
+//
+//  func (c *Client) Foo() (T, http.Header, error)
+//
+// The returned header is the the HTTP response header. It is safe to access
+// when the error is nil, of type *StatusError, or of a documented concrete
+// error type.
+//
+// The returned header is useful for obtaining the rate limit header and unique
+// Request-ID header set by Lyft. For details, see
+// https://developer.lyft.com/v1/docs/errors#section-detailed-information-on-error-codes.
+//
+// Miscellaneous formats
 //
 // According to http://petstore.swagger.io/?url=https://api.lyft.com/v1/spec#/,
 // currency strings returned are in ISO 4217.
@@ -49,7 +51,8 @@
 //
 // Missing Features
 //
-// The package does not yet support the sandbox routes.
+// The package does not yet support the sandbox routes; the ride details route;
+// and the ride rating and tipping route.
 package lyft // import "go.avalanche.space/lyft"
 
 import (
