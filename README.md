@@ -11,7 +11,7 @@ go get go.avalanche.space/lyft/...
 
 ### Docs
 
-[Godoc](https://godoc.org/go.avalanche.space/lyft)
+[![GoDoc](https://godoc.org/go.avalanche.space/lyft?status.svg)](https://godoc.org/go.avalanche.space/lyft)
 
 See the [Usage](https://godoc.org/go.avalanche.space/lyft#hdr-Usage) section 
 for a usage example.
