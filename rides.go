@@ -192,8 +192,8 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	}
 }
 
-// Receipt is returned by the client's RideReceipt method.
-type Receipt struct {
+// RideReceipt is returned by the client's RideReceipt method.
+type RideReceipt struct {
 	RideID      string
 	Price       Price
 	LineItems   []LineItem
@@ -202,8 +202,8 @@ type Receipt struct {
 	RideProfile string
 }
 
-func (r *Receipt) UnmarshalJSON(p []byte) error {
-	type receipt struct {
+func (r *RideReceipt) UnmarshalJSON(p []byte) error {
+	type rideReceipt struct {
 		RideID      string     `json:"ride_id"`
 		Price       Price      `json:"price"`
 		LineItems   []LineItem `json:"line_items"`
@@ -211,7 +211,7 @@ func (r *Receipt) UnmarshalJSON(p []byte) error {
 		Requested   string     `json:"requested_at"`
 		RideProfile string     `json:"ride_profile"`
 	}
-	var aux receipt
+	var aux rideReceipt
 	if err := json.Unmarshal(p, &aux); err != nil {
 		return err
 	}
@@ -235,25 +235,25 @@ type Charge struct {
 }
 
 // RideReceipt retrieves the receipt for the specified ride.
-func (c *Client) RideReceipt(rideID string) (Receipt, http.Header, error) {
+func (c *Client) RideReceipt(rideID string) (RideReceipt, http.Header, error) {
 	r, err := http.NewRequest("GET", fmt.Sprintf("%s/rides/%s/receipt", c.base(), rideID), nil)
 	if err != nil {
-		return Receipt{}, nil, err
+		return RideReceipt{}, nil, err
 	}
 
 	rsp, err := c.do(r)
 	if err != nil {
-		return Receipt{}, nil, err
+		return RideReceipt{}, nil, err
 	}
 	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
-		return Receipt{}, rsp.Header, NewStatusError(rsp)
+		return RideReceipt{}, rsp.Header, NewStatusError(rsp)
 	}
 
-	var rec Receipt
+	var rec RideReceipt
 	if err := json.NewDecoder(rsp.Body).Decode(&rec); err != nil {
-		return Receipt{}, rsp.Header, err
+		return RideReceipt{}, rsp.Header, err
 	}
 	return rec, rsp.Header, nil
 }
