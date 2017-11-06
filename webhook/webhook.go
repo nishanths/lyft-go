@@ -76,7 +76,7 @@ func Signature(h http.Header) string {
 	return strings.TrimPrefix(h.Get("X-Lyft-Signature"), "sha256=")
 }
 
-// Verify checks whether the incoming webhook requests originated from
+// Verify checks whether the incoming webhook request originated from
 // Lyft. The signature is the value of the X-Lyft-Signature header value
 // with the "sha256=" prefix already trimmed. The verification token
 // can be be found in the Lyft Developer Portal.
