@@ -103,6 +103,8 @@ func Verify(requestBody, signature, verificationToken []byte) (bool, error) {
 	return hmac.Equal(buf.Bytes(), signature), nil
 }
 
+// ErrVerify is returned by DecodeEvent if the request could not be
+// verified to have been originating from Lyft.
 var ErrVerify = errors.New("failed to verify request")
 
 // DecodeEvents decodes an incoming webhook request's body and header
