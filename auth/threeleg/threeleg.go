@@ -51,15 +51,15 @@ type token struct {
 	Scopes       string // space delimited
 }
 
-// RefToken is returned by RefreshToken.
-type RefToken struct {
+// RefreshedToken is returned by RefreshToken.
+type RefreshedToken struct {
 	AccessToken string
 	TokenType   string
 	Expires     time.Duration
 	Scopes      []string
 }
 
-type refToken struct {
+type refreshedToken struct {
 	AccessToken string
 	TokenType   string
 	Expires     int64  // seconds
@@ -104,30 +104,30 @@ func GenerateToken(c *http.Client, baseURL, clientID, clientSecret, code string)
 // RefreshToken refreshes the access token associated with refreshToken.
 // See Token for obtaining access/refresh token pairs.
 // baseURL is typically lyft.BaseURL.
-func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefToken, http.Header, error) {
+func RefreshToken(c *http.Client, baseURL, clientID, clientSecret, refreshToken string) (RefreshedToken, http.Header, error) {
 	body := fmt.Sprintf(`{"grant_type": "refresh_token", "refresh_token": "%s"}`, refreshToken)
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
-		return RefToken{}, nil, err
+		return RefreshedToken{}, nil, err
 	}
 	r.Header.Set("Content-Type", "application/json")
 	r.SetBasicAuth(clientID, clientSecret)
 
 	rsp, err := c.Do(r)
 	if err != nil {
-		return RefToken{}, nil, err
+		return RefreshedToken{}, nil, err
 	}
 	defer drainAndClose(rsp.Body)
 
 	if rsp.StatusCode != 200 {
-		return RefToken{}, rsp.Header, lyft.NewStatusError(rsp)
+		return RefreshedToken{}, rsp.Header, lyft.NewStatusError(rsp)
 	}
 
-	var ref refToken
+	var ref refreshedToken
 	if err := json.NewDecoder(rsp.Body).Decode(&ref); err != nil {
-		return RefToken{}, rsp.Header, err
+		return RefreshedToken{}, rsp.Header, err
 	}
-	return RefToken{
+	return RefreshedToken{
 		AccessToken: ref.AccessToken,
 		TokenType:   ref.TokenType,
 		Expires:     time.Second * time.Duration(ref.Expires),
