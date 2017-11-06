@@ -310,6 +310,9 @@ func (c *CancelRideError) Error() string {
 // CancelRide cancels the specificed ride. cancelToken is the cancel confirmation
 // token; it is optional. See https://developer.lyft.com/reference#ride-request-cancel
 // for more details on the token.
+//
+// If more action is required to cancel the ride, a returned error of
+// type *CancelRideError will have more details.
 func (c *Client) CancelRide(rideID, cancelToken string) (http.Header, error) {
 	var body io.Reader
 	if cancelToken != "" {
