@@ -251,7 +251,7 @@ func (c *Client) RideHistory(start, end time.Time, limit int32) ([]RideHistory, 
 		limit = 50 // max limit documented in the Lyft API reference
 	}
 	vals.Set("limit", strconv.FormatInt(int64(limit), 10))
-	r, err := http.NewRequest("GET", c.base()+"/v1/rides?"+vals.Encode(), nil)
+	r, err := http.NewRequest("GET", c.base()+"/rides?"+vals.Encode(), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -285,7 +285,7 @@ type UserProfile struct {
 
 // UserProfile returns the authenticated user's profile info.
 func (c *Client) UserProfile(id string) (UserProfile, http.Header, error) {
-	r, err := http.NewRequest("GET", c.base()+"/v1/profile", nil)
+	r, err := http.NewRequest("GET", c.base()+"/profile", nil)
 	if err != nil {
 		return UserProfile{}, nil, err
 	}

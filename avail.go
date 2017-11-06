@@ -42,7 +42,7 @@ func (c *Client) RideTypes(lat, lng float64, rideType string) ([]RideType, http.
 	if rideType != "" {
 		vals.Set("ride_type", rideType)
 	}
-	r, err := http.NewRequest("GET", c.base()+"/v1/ridetypes?"+vals.Encode(), nil)
+	r, err := http.NewRequest("GET", c.base()+"/ridetypes?"+vals.Encode(), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -130,7 +130,7 @@ func (c *Client) CostEstimates(startLat, startLng, endLat, endLng float64, rideT
 	if rideType != "" {
 		vals.Set("ride_type", formatFloat(endLng))
 	}
-	r, err := http.NewRequest("GET", c.base()+"/v1/cost?"+vals.Encode(), nil)
+	r, err := http.NewRequest("GET", c.base()+"/cost?"+vals.Encode(), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -198,7 +198,7 @@ func (c *Client) DriverETA(startLat, startLng, endLat, endLng float64, rideType 
 	if rideType != "" {
 		vals.Set("ride_type", formatFloat(endLng))
 	}
-	r, err := http.NewRequest("GET", c.base()+"/v1/eta?"+vals.Encode(), nil)
+	r, err := http.NewRequest("GET", c.base()+"/eta?"+vals.Encode(), nil)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -242,7 +242,7 @@ func (c *Client) DriversNearby(lat, lng float64) ([]NearbyDriver, http.Header, e
 	vals := make(url.Values)
 	vals.Set("lat", formatFloat(lat))
 	vals.Set("lng", formatFloat(lng))
-	r, err := http.NewRequest("GET", c.base()+"/v1/drivers?"+vals.Encode(), nil)
+	r, err := http.NewRequest("GET", c.base()+"/drivers?"+vals.Encode(), nil)
 	if err != nil {
 		return nil, nil, err
 	}

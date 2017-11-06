@@ -25,7 +25,7 @@
 // Miscellaneous formats
 //
 // According to http://petstore.swagger.io/?url=https://api.lyft.com/v1/spec#/,
-// currency strings returned are in ISO 4217.
+// the format of the currency strings returned is ISO 4217.
 //
 // Usage
 //
@@ -46,8 +46,8 @@
 //   if err != nil {
 //       log.Fatalf("error getting ride types: %s", err)
 //   }
-//   log.Printf("ride types: %+v", r)
-//   log.Printf("Request-ID: %s", lyft.RequestID(header))
+//   fmt.Printf("ride types: %+v\n", r)
+//   fmt.Printf("Request-ID: %s\n", lyft.RequestID(header))
 //
 // Missing Features
 //

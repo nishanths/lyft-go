@@ -132,7 +132,7 @@ func (c *Client) RequestRide(req RideRequest) (CreatedRide, http.Header, error) 
 	if err := json.NewEncoder(&buf).Encode(req); err != nil {
 		return CreatedRide{}, nil, err
 	}
-	r, err := http.NewRequest("POST", c.base()+"/v1/rides", &buf)
+	r, err := http.NewRequest("POST", c.base()+"/rides", &buf)
 	if err != nil {
 		return CreatedRide{}, nil, err
 	}
@@ -167,7 +167,7 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	if err := json.NewEncoder(&buf).Encode(loc); err != nil {
 		return Location{}, nil, err
 	}
-	r, err := http.NewRequest("PUT", fmt.Sprintf("%s/v1/rides/%s/destination", c.base(), rideID), &buf)
+	r, err := http.NewRequest("PUT", fmt.Sprintf("%s/rides/%s/destination", c.base(), rideID), &buf)
 	if err != nil {
 		return Location{}, nil, err
 	}
@@ -191,7 +191,69 @@ func (c *Client) SetDestination(rideID string, loc Location) (Location, http.Hea
 	}
 }
 
-// func (c *Client) RideReceipt()
+type Receipt struct {
+	RideID      string
+	Price       Price
+	LineItems   []LineItem
+	Charges     []Charge
+	Requested   time.Time
+	RideProfile string
+}
+
+func (r *Receipt) UnmarshalJSON(p []byte) error {
+	type receipt struct {
+		RideID      string     `json:"ride_id"`
+		Price       Price      `json:"price"`
+		LineItems   []LineItem `json:"line_items"`
+		Charges     []Charge   `json:"charges"`
+		Requested   string     `json:"requested_at"`
+		RideProfile string     `json:"ride_profile"`
+	}
+	var aux receipt
+	if err := json.Unmarshal(p, &aux); err != nil {
+		return err
+	}
+	r.RideID = aux.RideID
+	r.Price = aux.Price
+	r.LineItems = aux.LineItems
+	r.Charges = aux.Charges
+	requested, err := time.Parse(datetimeLayout, aux.Requested)
+	if err != nil {
+		return err
+	}
+	r.Requested = requested
+	r.RideProfile = aux.RideProfile
+	return nil
+}
+
+type Charge struct {
+	Amount        int    `json:"amount"`
+	Currency      string `json:"currency"`
+	PaymentMethod string `json:"payment_method"`
+}
+
+func (c *Client) RideReceipt(rideID string) (Receipt, http.Header, error) {
+	r, err := http.NewRequest("GET", fmt.Sprintf("%s/rides/%s/receipt", c.base(), rideID), nil)
+	if err != nil {
+		return Receipt{}, nil, err
+	}
+
+	rsp, err := c.do(r)
+	if err != nil {
+		return Receipt{}, nil, err
+	}
+	defer rsp.Body.Close()
+
+	if rsp.StatusCode != 200 {
+		return Receipt{}, rsp.Header, NewStatusError(rsp)
+	}
+
+	var rec Receipt
+	if err := json.NewDecoder(rsp.Body).Decode(&rec); err != nil {
+		return Receipt{}, rsp.Header, err
+	}
+	return rec, rsp.Header, nil
+}
 
 // TODO: Implement these.
 // func (c *Client) RideDetails()
