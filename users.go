@@ -134,7 +134,7 @@ func (l rideLocation) convert(res *RideLocation) error {
 }
 
 type cancellationPrice struct {
-	Amount        int    `json:"amonut"`
+	Amount        int    `json:"amount"`
 	Currency      string `json:"currency"`
 	Token         string `json:"token"`
 	TokenDuration int64  `json:"token_duration"` // seconds; documented as int
@@ -215,13 +215,13 @@ type Vehicle struct {
 }
 
 type Price struct {
-	Amount      int    `json:"amonut"`
+	Amount      int    `json:"amount"`
 	Currency    string `json:"currency"`
 	Description string `json:"description"`
 }
 
 type LineItem struct {
-	Amount      int    `json:"amonut"`
+	Amount      int    `json:"amount"`
 	Currency    string `json:"currency"`
 	Description string `json:"type"`
 }
