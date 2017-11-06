@@ -71,9 +71,9 @@ func Signature(h http.Header) string {
 	return strings.TrimPrefix(h.Get("X-Lyft-Signature"), "sha256=")
 }
 
-func VerifySignature(responseBody, signature, verificationToken []byte) bool {
+func VerifySignature(requestBody, signature, verificationToken []byte) bool {
 	mac := hmac.New(sha256.New, verificationToken)
-	mac.Write(responseBody)
+	mac.Write(requestBody)
 	bodySignature := mac.Sum(nil)
 	return hmac.Equal([]byte(base64.StdEncoding.EncodeToString(bodySignature)), signature)
 }
