@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	"go.avalanche.space/lyft"
+	"go.avalanche.space/lyft-go"
 )
 
 // AuthorizationURL constructs the URL that a user should be directed to, in order for the user

@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"go.avalanche.space/lyft"
+	"go.avalanche.space/lyft-go"
 )
 
 // Event types.
