@@ -32,7 +32,7 @@ type token struct {
 // The access token returned can be used in lyft.Client.
 // baseURL is typically lyft.BaseURL.
 func GenerateToken(c *http.Client, baseURL, clientID, clientSecret string) (Token, http.Header, error) {
-	body := `{"grant_type": "client_credentials", "scope": "public"}`
+	const body = `{"grant_type": "client_credentials", "scope": "public"}`
 	r, err := http.NewRequest("POST", baseURL+"/oauth/token", strings.NewReader(body))
 	if err != nil {
 		return Token{}, nil, err
