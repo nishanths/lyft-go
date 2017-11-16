@@ -1,4 +1,4 @@
-package lyft // import "go.avalanche.space/lyft-go"
+package lyft
 
 import (
 	"bytes"

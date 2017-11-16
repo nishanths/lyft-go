@@ -1,6 +1,6 @@
 // Package twoleg provides functions for working with the two-legged
 // OAuth flow described at https://developer.lyft.com/v1/docs/authentication#section-client-credentials-2-legged-flow-for-public-endpoints.
-package twoleg // import "go.avalanche.space/lyft-go/auth/twoleg"
+package twoleg
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"go.avalanche.space/lyft-go"
+	"github.com/nishanths/lyft-go"
 )
 
 // Token is returned by GenerateToken.

@@ -1,6 +1,6 @@
 // Package webhook provides types and utility functions for handling
 // Lyft webhooks.
-package webhook // import "go.avalanche.space/lyft-go/webhook"
+package webhook
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"strings"
 	"time"
 
-	"go.avalanche.space/lyft-go"
+	"github.com/nishanths/lyft-go"
 )
 
 // Event types.
